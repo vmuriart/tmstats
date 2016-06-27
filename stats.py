@@ -12,9 +12,9 @@ class FactionStat(object):
         self.name = name
         self.events = game["events"]["faction"][name]
         self.user  = game["factions2"][name]
-        self.score = self.events["vp"]["round"]["all"]
+        self.score = self.events["vp"]["round"]["all"]+20
         self.numplayers = game["player_count"]
-        avgscore = float( game["events"]["faction"]["all"]["vp"]["round"]["all"] ) / self.numplayers
+        avgscore = float( game["events"]["faction"]["all"]["vp"]["round"]["all"] ) / self.numplayers + 20
         self.margin = self.score  - avgscore
         self.parse_events()
         del self.events #don't need this anymore!
