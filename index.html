@@ -23,7 +23,7 @@
                     for( var i = 0; i < stats.length; i++ )
                     {
 						if( stats[i] )
-                        get_stats_by_key( new RegExp( stats[i] ) );
+                        get_stats_by_key( new RegExp( "^"+stats[i] ) );
                     }
                 }
             });
@@ -82,7 +82,7 @@
                 var chunks = [];
                 var gchunk;
                 var ing = false;
-                for( var i = 1; i < regex_str.length-1; i++ )
+                for( var i = 2; i < regex_str.length-1; i++ )
                 {
                     if( regex_str[i] == '*' )
                     {
@@ -315,7 +315,7 @@
 				$.each( new_keys, function( i, new_key ) {
 					if( $.inArray(new_key, exist_keys ) < 0  )
 					{
-						get_stats_by_key( new RegExp( new_key ) );
+						get_stats_by_key( new RegExp( "^"+new_key ) );
 						hash += new_key + ",";
 					}
                 } );
@@ -334,7 +334,7 @@
                 var exist_keys = hash_keys[1];
 				if( $.inArray(new_key, exist_keys ) < 0  )
 				{
-					get_stats_by_key( new RegExp( new_key ) );
+					get_stats_by_key( new RegExp( "^"+new_key ) );
 					hash += new_key + ",";
                 }
 
@@ -375,7 +375,7 @@
 				$.each( exist_keys, function( i, key ) {
 					if( key != "" && document.getElementById(key) == null )
 					{
-						get_stats_by_key( new RegExp( key ) );
+						get_stats_by_key( new RegExp( "^"+key ) );
 					}
 
 				} );
