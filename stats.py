@@ -97,8 +97,8 @@ def parse_game_file( game_fn ):
     else:
         openfunc = open
     with openfunc( game_fn ) as game_file:
-        games = json.load( game_file )
         print( "parsing " + game_fn + "..." )
+        games = json.load( game_file )
         for game in games:
             f = dict( [(i["faction"],i["player"]) for i in game["factions"]])
             if "player1" in f or "player2" in f or "player3" in f or "player4" in f or "player5" in f:
