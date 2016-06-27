@@ -476,10 +476,6 @@
                         <option value='b'>FAV11 (E1)
                         <option value='c'>FAV12 (A1)
                     </select></td>
-
-                <td> <input type="button" onclick="get_stats()" value="Stats!" /></td>
-                <td> <input type="button" onclick="$('#stats').empty();window.location='#'" value="Clear" />
-                    <span id="error" style="display:none">No Matches!</span> </td>
             </tr>
             <tr><td><input type="button" onclick="enumerate('faction')" value="Enumerate"/></td>
                 <td><input type="button" onclick="enumerate('pcount')" value="Enumerate"/></td>
@@ -491,7 +487,12 @@
 					<td></td>
                 <td><input type="button" onclick="enumerate('BON')" value="Enumerate"/></td>
                 <td><input type="button" onclick="enumerate('FAV')" value="Enumerate"/></td>
-				</tr>
+            </tr>
+            <tr>
+                <td> <input type="button" onclick="get_stats()" value="Stats!" /></td>
+                <td> <input type="button" onclick="$('#stats').empty();window.location='#'" value="Clear" />
+                <span id="error" style="display:none">No Matches!</span> </td>
+            </tr>
         </table>
     </div>
 
