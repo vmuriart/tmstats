@@ -185,7 +185,7 @@ def get_key( faction ):
     key += str( get_rating( faction.user, faction.name ))
     key += "".join( str(i) for i in tuple(faction.B[:,1]))
     key += str(faction.BON[0])
-    key += "".join( hex(i+1)[-2] for i in tuple(numpy.where( faction.FAV == 1 )[0]))
+    key += "".join( hex(i+1)[-1] for i in tuple(numpy.where( faction.FAV == 1 )[0]))
     return key
 
 
