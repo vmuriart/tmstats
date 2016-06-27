@@ -124,9 +124,15 @@ def parse_games( game_list = None ):
         game_list = map( lambda g: GAME_PATH + os.path.sep + g, os.listdir( GAME_PATH ) )
     for game in game_list:
         try:
-            allstats.extend( parse_game_file( game ) )
+            if '.json' in game:
+                allstats.extend( parse_game_file( game ) )
+            else:
+                print game, "is not matched"
         except KeyboardInterrupt, e:
             break
+        except TypeError, e:
+            print game, "is not game json"
+            continue
     return allstats
 
 
