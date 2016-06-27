@@ -145,6 +145,8 @@ except:
 def get_rating( player, faction ):
     if player not in ratings:
         return 0
+    if "faction_breakdown" not in ratings[player]:
+        return 0
     if faction not in ratings[player]["faction_breakdown"]:
         return 0
     score = ratings[player]["faction_breakdown"][faction]["score"]
