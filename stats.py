@@ -230,7 +230,7 @@ def save_stats( statpool, filename = "stats.json" ):
 if __name__ == "__main__":
     allstats = load()
     if not allstats:
-        if not os.path.isfile( GAME_PATH ):
+        if not os.path.isdir( GAME_PATH ):
             print( "You should download some games (see http://terra.snellman.net/data/events/ ) to "+GAME_PATH )
             exit(1)
         allstats = parse_games()
