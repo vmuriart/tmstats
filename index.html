@@ -23,7 +23,7 @@
                     for( var i = 0; i < stats.length; i++ )
                     {
 						if( stats[i] )
-                        get_stats_by_key( new RegExp( "^"+stats[i] ) );
+                        get_stats_by_key( stats[i] );
                     }
                 }
             });
@@ -82,7 +82,7 @@
                 var chunks = [];
                 var gchunk;
                 var ing = false;
-                for( var i = 2; i < regex_str.length-1; i++ )
+                for( var i = 0; i < regex_str.length; i++ )
                 {
                     if( regex_str[i] == '*' )
                     {
@@ -98,6 +98,16 @@
                         chunks.push( gchunk )
                         ing = false;
                     }
+                    else if( regex_str[i] == '^' )
+                    {
+                        //ignore
+                        ing = false;
+                    }
+                    else if( regex_str[i] == '$' )
+                    {
+                        //ignore
+                        ing = false;
+                    }
                     else
                     {
                         if( ing )
@@ -111,9 +121,10 @@
             
             function get_stats_by_key( key_pattern )
             {
+                var re = new RegExp( "^"+key_pattern );
                 var ret;
                 $.each( statpool, function( key, stats ) {
-                    if( key_pattern.test( key ) )
+                    if( re.test( key ) )
                     {
                         if( ret == undefined )
                             ret = stats;
@@ -130,13 +141,12 @@
                 {
                     $("#error").hide();
 
-                    var chunks = get_regex_chunks( key_pattern.toString() );
+                    var chunks = get_regex_chunks( key_pattern );
                     var fact = key_to_faction( chunks[0] );
 
 
                     var pcnt = chunks[1];
-
-                    if( pcnt == '.' ) pcnt = "2-5P";
+                    if( pcnt == '.' ) pcnt = "1-7P";
                     else if( pcnt.length == 1 )
                     {
                         pcnt += "P"
@@ -145,7 +155,20 @@
                     {
                         //multi-select
                         if( pcnt == "234" ) pcnt = "2-4P";
+                        else if( pcnt == "2345" ) pcnt = "2-5P";
+                        else if( pcnt == "23456" ) pcnt = "2-6P";
+                        else if( pcnt == "234567" ) pcnt = "2-7P";
                         else if( pcnt == "345" ) pcnt = "3-5P";
+                        else if( pcnt == "3456" ) pcnt = "3-6P";
+                        else if( pcnt == "34567" ) pcnt = "3-7P";
+                        else if( pcnt == "456" ) pcnt = "4-6P";
+                        else if( pcnt == "4567" ) pcnt = "4-7P";
+                        else if( pcnt == "567" ) pcnt = "5-7P";
+                        else if( pcnt == "123" ) pcnt = "1-3P";
+                        else if( pcnt == "1234" ) pcnt = "1-4P";
+                        else if( pcnt == "12345" ) pcnt = "1-5P";
+                        else if( pcnt == "123456" ) pcnt = "1-6P";
+                        else if( pcnt == "1234567" ) pcnt = "1-7P";
                         else pcnt = pcnt.split("").join(",")+"P";
 
                     }
@@ -210,8 +233,6 @@
                         section.append( header )
                         $("#stats").append( cont );
                     }
-
-					key_pattern = key_pattern.toString().split("/")[1];
 
 					var row = $("<tr>", {id:key_pattern,class:'stat'});
                         row.append( "<td>" +pcnt );
@@ -315,7 +336,7 @@
 				$.each( new_keys, function( i, new_key ) {
 					if( $.inArray(new_key, exist_keys ) < 0  )
 					{
-						get_stats_by_key( new RegExp( "^"+new_key ) );
+						get_stats_by_key( new_key );
 						hash += new_key + ",";
 					}
                 } );
@@ -334,7 +355,7 @@
                 var exist_keys = hash_keys[1];
 				if( $.inArray(new_key, exist_keys ) < 0  )
 				{
-					get_stats_by_key( new RegExp( "^"+new_key ) );
+					get_stats_by_key( new_key );
 					hash += new_key + ",";
                 }
 
@@ -375,7 +396,7 @@
 				$.each( exist_keys, function( i, key ) {
 					if( key != "" && document.getElementById(key) == null )
 					{
-						get_stats_by_key( new RegExp( "^"+key ) );
+						get_stats_by_key( key );
 					}
 
 				} );
