@@ -8,7 +8,7 @@
         <script>
             $.fn.exists = function () {
                 return this.length !== 0;
-            }
+            };
 
             var statpool = {};
             $.getJSON( 'stats.json', function( data ){
@@ -16,13 +16,13 @@
                     statpool[key] = stats.map( function( stat ){ return new Welford( stat ); } );
                 });
 
-                var hash = window.location.hash
+                var hash = window.location.hash;
                 if( hash )
                 {
                     var stats = hash.substr(1).split(",");
                     for( var i = 0; i < stats.length; i++ )
                     {
-						if( stats[i] )
+                        if( stats[i] )
                         get_stats_by_key( stats[i] );
                     }
                 }
@@ -51,20 +51,20 @@
                 'Yetis'];
             function key_to_faction( key )
             {
-                if( key == '.' ) return "All";
-				var facts = [];
-				for( var i =0; i < key.length; i++)
-					facts.push( factions[key.charCodeAt(i) - 97] );
-				return facts.join(" ");
+                if( key === '.' ) return "All";
+                var facts = [];
+                for( var i =0; i < key.length; i++)
+                    facts.push( factions[key.charCodeAt(i) - 97] );
+                return facts.join(" ");
             }
 
             function key_to_rating( key )
             {
-                if( key == '.' ) return "All";
-                if( key == '0' ) return "Bad";
-                if( key == '1' ) return "Poor";
-                if( key == '2' ) return "Good";
-                if( key == '3' ) return "Best";
+                if( key === '.' ) return "All";
+                if( key === '0' ) return "Bad";
+                if( key === '1' ) return "Poor";
+                if( key === '2' ) return "Good";
+                if( key === '3' ) return "Best";
                 return key.split("").map(function(x){return parseInt(x)+1;}).join(",");
             }
             
@@ -73,7 +73,7 @@
                 var item = $("#"+type);
                 var strict = $("#"+type+"_strict");
                 if( strict.prop('checked') ) return item.val();
-                if( item.val() == 0 ) return ".";
+                if( item.val() === "0" ) return ".";
                 return"[" + item.val() +"-9]";
             }
 
@@ -84,26 +84,26 @@
                 var ing = false;
                 for( var i = 0; i < regex_str.length; i++ )
                 {
-                    if( regex_str[i] == '*' )
+                    if( regex_str[i] === '*' )
                     {
-                        chunks.pop()
+                        chunks.pop();
                     }
-                    else if( regex_str[i] == '[' )
+                    else if( regex_str[i] === '[' )
                     {
                         gchunk = "";
                         ing = true;
                     }
-                    else if( regex_str[i] == ']' )
+                    else if( regex_str[i] === ']' )
                     {
                         chunks.push( gchunk )
                         ing = false;
                     }
-                    else if( regex_str[i] == '^' )
+                    else if( regex_str[i] === '^' )
                     {
                         //ignore
                         ing = false;
                     }
-                    else if( regex_str[i] == '$' )
+                    else if( regex_str[i] === '$' )
                     {
                         //ignore
                         ing = false;
@@ -126,14 +126,14 @@
                 $.each( statpool, function( key, stats ) {
                     if( re.test( key ) )
                     {
-                        if( ret == undefined )
+                        if( ret === undefined )
                             ret = stats;
                         else
                             ret = stats.map( function( s,i ){ return s.combine( ret[i] ); } );
                     }
                 });
 
-                if( ret == undefined )
+                if( ret === undefined )
                 {
                     $("#error").show();
                 }
@@ -142,102 +142,181 @@
                     $("#error").hide();
 
                     var chunks = get_regex_chunks( key_pattern );
-                    var fact = key_to_faction( chunks[0] );
 
+                    var map_type = 'any';
+                    if ( chunks[0] === 'a' ) map_type = 'Original';
+                    else if ( chunks[0] === 'b' ) map_type = 'F&I Side 1';
+                    else if ( chunks[0] === 'c' ) map_type = 'F&I Side 2';
+                    else if ( chunks[0] === 'ab' ) map_type = 'Org, F&I1';
+                    else if ( chunks[0] === 'ac' ) map_type = 'Org, F&I2';
+                    else if ( chunks[0] === 'bc' ) map_type = 'F&I Side 1,2';
+                    else if ( chunks[0] === 'a-c' ) map_type = 'any';
 
-                    var pcnt = chunks[1];
-                    if( pcnt == '.' ) pcnt = "1-7P";
-                    else if( pcnt.length == 1 )
+                    var cultists_errata = 'both';
+                    if ( chunks[1] === '0' ) cultists_errata = 'w/o eratta';
+                    else if ( chunks[1] === '1' ) cultists_errata = 'with eratta';
+                    else if ( chunks[1] === '01' ) cultists_errata = 'both';
+
+                    var option_desc = '';
+                    if (chunks[2] === '0') option_desc += 'TW:off<br>';
+                    if (chunks[2] === '1') option_desc += 'TW:on<br>';
+                    
+                    if (chunks[3] === '0') option_desc += 'BON10:off<br>';
+                    if (chunks[3] === '1') option_desc += 'BON10:on<br>';
+                    
+                    if (chunks[4] === '0') option_desc += 'FinalScoring:off<br>';
+                    if (chunks[4] === '1') option_desc += 'FinalScoring:on<br>';
+                    
+                    if (chunks[5] === '0') option_desc += 'Ice:off<br>';
+                    if (chunks[5] === '1') option_desc += 'Ice:on<br>';
+                    
+                    if (chunks[6] === '0') option_desc += 'Volcano:off<br>';
+                    if (chunks[6] === '1') option_desc += 'Volcano:on<br>';
+                    
+                    if (chunks[7] === '0') option_desc += 'Variable:off<br>';
+                    if (chunks[7] === '1') option_desc += 'Variable:v1<br>';
+                    if (chunks[7] === '2') option_desc += 'Variable:v2<br>';
+                    if (chunks[7] === '3') option_desc += 'Variable:v3<br>';
+                    if (chunks[7] === '4') option_desc += 'Variable:v4<br>';
+                    if (chunks[7] === '5') option_desc += 'Variable:v5<br>';
+                    
+                    if (chunks[8] === '0') option_desc += 'PassingOrder:off<br>';
+                    if (chunks[8] === '1') option_desc += 'PassingOrder:on<br>';
+                    
+                    if (chunks[9] === '0') option_desc += 'SCORE9:off<br>';
+                    if (chunks[9] === '1') option_desc += 'SCORE9:on<br>';
+                    
+                    var scoring_r1 = 'any';
+                    if (chunks[10] !== '.') scoring_r1 = chunks[10];
+                    
+                    var order_r1 = 'any';
+                    if (chunks[11] !== '.') order_r1 = chunks[11];
+
+                    var fact = key_to_faction( chunks[12] );
+
+                    var pcnt = chunks[13];
+                    if( pcnt === '.' ) pcnt = "1-7P";
+                    else if( pcnt.length === 1 )
                     {
-                        pcnt += "P"
+                        pcnt += "P";
                     }
                     else
                     {
                         //multi-select
-                        if( pcnt == "234" ) pcnt = "2-4P";
-                        else if( pcnt == "2345" ) pcnt = "2-5P";
-                        else if( pcnt == "23456" ) pcnt = "2-6P";
-                        else if( pcnt == "234567" ) pcnt = "2-7P";
-                        else if( pcnt == "345" ) pcnt = "3-5P";
-                        else if( pcnt == "3456" ) pcnt = "3-6P";
-                        else if( pcnt == "34567" ) pcnt = "3-7P";
-                        else if( pcnt == "456" ) pcnt = "4-6P";
-                        else if( pcnt == "4567" ) pcnt = "4-7P";
-                        else if( pcnt == "567" ) pcnt = "5-7P";
-                        else if( pcnt == "123" ) pcnt = "1-3P";
-                        else if( pcnt == "1234" ) pcnt = "1-4P";
-                        else if( pcnt == "12345" ) pcnt = "1-5P";
-                        else if( pcnt == "123456" ) pcnt = "1-6P";
-                        else if( pcnt == "1234567" ) pcnt = "1-7P";
+                        if( pcnt === "234" ) pcnt = "2-4P";
+                        else if( pcnt === "2345" ) pcnt = "2-5P";
+                        else if( pcnt === "23456" ) pcnt = "2-6P";
+                        else if( pcnt === "234567" ) pcnt = "2-7P";
+                        else if( pcnt === "345" ) pcnt = "3-5P";
+                        else if( pcnt === "3456" ) pcnt = "3-6P";
+                        else if( pcnt === "34567" ) pcnt = "3-7P";
+                        else if( pcnt === "456" ) pcnt = "4-6P";
+                        else if( pcnt === "4567" ) pcnt = "4-7P";
+                        else if( pcnt === "567" ) pcnt = "5-7P";
+                        else if( pcnt === "123" ) pcnt = "1-3P";
+                        else if( pcnt === "1234" ) pcnt = "1-4P";
+                        else if( pcnt === "12345" ) pcnt = "1-5P";
+                        else if( pcnt === "123456" ) pcnt = "1-6P";
+                        else if( pcnt === "1234567" ) pcnt = "1-7P";
                         else pcnt = pcnt.split("").join(",")+"P";
 
                     }
 
-                    var rate = key_to_rating ( chunks[2] );
+                    var rate = key_to_rating ( chunks[14] );
 
                     function building_str( chunk, build )
                     {
-                        if( chunk == '.')       return ""
-                        if( chunk.length == 1 )
+                        if( chunk === '.')       return ""
+                        if( chunk.length === 1 )
                         {
-                            if( chunk == '1' )
+                            if( chunk === '1' )
                                 return build;
                             return chunk+build;
                         }
                         return chunk[0]+build;
                     }
                     var BUILD = 
-                        building_str( chunks[3], "D" ) +
-                        building_str( chunks[4], "TP" ) +
-                        building_str( chunks[5], "TE" ) +
-                        building_str( chunks[6], "SA" ) +
-                        building_str( chunks[7], "SH" ) ;
-					var BON = chunks[8];
-					if( BON == "." || BON == undefined ) BON = "";
+                        building_str( chunks[15], "D" ) +
+                        building_str( chunks[16], "TP" ) +
+                        building_str( chunks[17], "TE" ) +
+                        building_str( chunks[18], "SA" ) +
+                        building_str( chunks[19], "SH" ) ;
+                    var BON = chunks[20];
+                    if( BON === "." || BON === undefined ) BON = "";
 
-					var FAV = chunks[9];
-					if( FAV == "." || FAV == undefined ) FAV = "";
+                    var leech1 = chunks[21];
+                    if (leech1 === '0') leech1 = '0-3';
+                    if (leech1 === '1') leech1 = '4-7';
+                    if (leech1 === '2') leech1 = '8-11';
+                    if (leech1 === '3') leech1 = '12-15';
+                    if (leech1 === '4') leech1 = '16+';
+                    if (leech1 === '01') leech1 = '0-7';
+                    if (leech1 === '012') leech1 = '0-11';
+                    if (leech1 === '0123') leech1 = '0-15';
+                    if (leech1 === '01234') leech1 = 'any';
+                    if (leech1 === '.') leech1 = 'any';
+                    if (leech1 === '12') leech1 = '4-11';
+                    if (leech1 === '123') leech1 = '4-15';
+                    if (leech1 === '1234') leech1 = '4+';
+                    if (leech1 === '23') leech1 = '8-15';
+                    if (leech1 === '234') leech1 = '8+';
+                    if (leech1 === '34') leech1 = '12+';
 
-					var strBON = [];
-					for( var i = 0; i < BON.length; i++ )
-						strBON.push( ALLBON[ BON[i] ] );
-					BON = strBON.join("<br>");
+                    var FAV = chunks[22];
+                    if( FAV === "." || FAV === undefined ) FAV = "";
 
-					var strFAV = [];
-					for( var i = 0; i < FAV.length; i++ )
-						strFAV.push( ALLFAV[ FAV[i] ] );
-					FAV = strFAV.join("<br>");
+                    var strBON = [];
+                    for( var i = 0; i < BON.length; i++ )
+                        strBON.push( ALLBON[ BON[i] ] );
+                    BON = strBON.join("<br>");
 
-					var desc = [];
-					if( BUILD ) desc.push( BUILD );
-					if( BON ) desc.push( BON );
-					if( FAV ) desc.push( FAV );
-					desc = desc.join("<br>")
+                    var strFAV = [];
+                    for( var i = 0; i < FAV.length; i++ )
+                        strFAV.push( ALLFAV[ FAV[i] ] );
+                    FAV = strFAV.join("<br>");
 
-					var tooltip = BON + " " + FAV;
+                    var desc = [];
+                    if( BUILD ) desc.push( BUILD );
+                    if( BON ) desc.push( BON );
+                    if( FAV ) desc.push( FAV );
+                    desc = desc.join("<br>");
+
+                    var tooltip = BON + " " + FAV;
 
                     var section = $("#"+fact );
-					var cont    = $("#cont-"+fact );
+                    var cont    = $("#cont-"+fact );
                     if( !section.exists() )
                     {
                         section = $("<table>",{id:fact,class:"stat-cont",style:"font-family: 'Courier New', monospace;border-collapse:collapse"});
                         cont = $("<div>",{id:"cont-"+fact,style:"width:600px"});
                         cont.append( section );
                         var header = $("<tr style='border-bottom:1px solid gray;'>");
-                            header.append( "<th           style='text-align:left; font-family:serif;width:120px;'>"+fact )
-                            header.append( "<th>Rat." )
-                            header.append( "<th           style='border-left:1px solid gray;'>Desc." )
-                            header.append( "<th colspan=3 style='border-left:1px solid gray;width:120x;'>VP" )
-                            header.append( "<th colspan=3 style='border-left:1px solid gray;width:120px;'>Margin" )
-                            header.append( "<th colspan=1 style='border-left:1px solid gray;'>Count" )
-                        section.append( header )
+                            header.append( "<th           style='text-align:left; font-family:serif;width:120px;'>"+fact );
+                            header.append( "<th>Map." );
+                            header.append( "<th>errata<br>(cultists)" );
+                            header.append( "<th>Options." );
+                            header.append( "<th>Rat." );
+                            header.append( "<th>R1:Score" );
+                            header.append( "<th>R1:Order" );
+                            header.append( "<th>R1:leechPw" );
+                            header.append( "<th           style='border-left:1px solid gray;'>Desc." );
+                            header.append( "<th colspan=3 style='border-left:1px solid gray;width:120px;'>VP" );
+                            header.append( "<th colspan=3 style='border-left:1px solid gray;width:120px;'>Margin" );
+                            header.append( "<th colspan=1 style='border-left:1px solid gray;'>Count" );
+                        section.append( header );
                         $("#stats").append( cont );
                     }
 
-					var row = $("<tr>", {id:key_pattern,class:'stat'});
+                    var row = $("<tr>", {id:key_pattern,class:'stat'});
                         row.append( "<td>" +pcnt );
+                        row.append( "<td>"+map_type );
+                        row.append( "<td>"+cultists_errata);
+                        row.append( "<td>"+option_desc);
                         row.append( "<td>"+ rate );
-						row.append( "<td class='data' style='text-align:left'>"+desc+"<span class='tooltip'>"+tooltip+"</span>" );
+                        row.append( "<td>"+ scoring_r1 );
+                        row.append( "<td>"+ order_r1 );
+                        row.append( "<td>"+ leech1 );
+                        row.append( "<td class='data' style='text-align:left'>"+desc+"<span class='tooltip'>"+tooltip+"</span>" );
 
                         row.append( "<td class='data'>" +ret[0].mean().toFixed(2)+"<span class='tooltip'>Standard Deviation:"+ret[0].std().toFixed(2)+"</span>");
                         row.append( "<td>±" );
@@ -251,22 +330,22 @@
 
                     section.append( row );
 
-					cont.height( section.height() +2 );
+                    cont.height( section.height() +2 );
                 }
             }
 
             function get_multi_select_key( name, opt )
             {
                 var item  = $("#"+name);
-                var value = item.val()
+                var value = item.val();
                 var regpat ="";
-                if( value == null )
+                if( value === null )
                 {
-                    if( opt == undefined ) regpat ="." //wildcard
+                    if( opt === undefined ) regpat ="."; //wildcard
                 }
-                else if( value.length == 1 )
+                else if( value.length === 1 )
                     regpat = value[0];
-                else if( value.length == item.children().length )
+                else if( value.length === item.children().length )
                     regpat = ".";
                 else 
                     regpat = "["+value.join("")+"]";
@@ -275,17 +354,43 @@
 
             function get_key_from_selection( ) 
             {
-				var fctpat = get_multi_select_key( "faction" );
+                var fctpat = get_multi_select_key( "faction" );
                 var pctpat = get_multi_select_key( "pcount" );
                 var ratpat = get_multi_select_key( "rating" );
                 var BONpat = get_multi_select_key( "BON" );
                 var FAVpat = get_multi_select_key( "FAV", true );
+                
+                var map_type = get_multi_select_key( "map" );
+                var cultist_errata = get_multi_select_key( "cultists" );
+                var mini_expansion1 = get_multi_select_key( "useTW" );
+                var shipping_bonus = get_multi_select_key( "useBON10" );
+                var additional_scoring = get_multi_select_key( "additional" );
+                var ice_factions = get_multi_select_key( "ice" );
+                var volcano_factions = get_multi_select_key( "volcano" );
+                var variable_factions = get_multi_select_key( "variable" );
+                var passing_order = get_multi_select_key( "passing_order" );
+                var temple_scoring = get_multi_select_key( "score9" );
+                var scoring_r1 = get_multi_select_key( "score1" );
+                var orders_r1 = get_multi_select_key( "order1" );
+                var leech_pw_r1 = get_multi_select_key( "leech1" );
 
-				//Favors are optional and can be in any order
+                //Favors are optional and can be in any order
                 if( FAVpat )
                     FAVpat = ".*" + FAVpat;
 
                 var key_pattern = 
+                    map_type +
+                    cultist_errata +
+                    mini_expansion1 +
+                    shipping_bonus +
+                    additional_scoring +
+                    ice_factions +
+                    volcano_factions +
+                    variable_factions +
+                    passing_order +
+                    temple_scoring +
+                    scoring_r1 +
+                    orders_r1 +
                     fctpat + 
                     pctpat +
                     ratpat +
@@ -295,81 +400,74 @@
                     building_key("SA") +
                     building_key("SH") +
                     BONpat + 
+                    leech_pw_r1 +
                     FAVpat 
                     ;
-				return key_pattern;
+                return key_pattern;
             }
 
-			function compute_stats_for_key( key_pattern )
-			{
-                if( $.inArray(key_pattern, stats ) < 0  )
-                {
-                    return key_pattern;
-                }
-			}
-
-			function prepare_hash_and_get_exist_keys()
-			{
-                var hash = window.location.hash
+            function prepare_hash_and_get_exist_keys()
+            {
+                var hash = window.location.hash;
                 var exist_keys = hash.substr(1).split(",");
 
-				if( hash == "" ) hash = "#";
-				else if( hash != "#" ) hash += ",";
+                if( hash === "" ) hash = "#";
+                else if( hash !== "#" ) hash += ",";
 
-				return [hash,exist_keys];
-			}
+                return [hash,exist_keys];
+            }
 
             function enumerate( id )
             {
-				var item = $("#"+id );
-				var prev_val = item.val();
-				var new_keys = item.children().map(function(i,opt){
-						item.val( opt.value );
-						return get_key_from_selection();
-						});
+                var item = $("#"+id );
+                var prev_val = item.val();
+                var new_keys = item.children().map(function(i,opt){
+                        item.val( opt.value );
+                        return get_key_from_selection();
+                        });
 
 
-				var hash_keys = prepare_hash_and_get_exist_keys();
-				var hash = hash_keys[0];
+                var hash_keys = prepare_hash_and_get_exist_keys();
+                var hash = hash_keys[0];
                 var exist_keys = hash_keys[1];
 
-				$.each( new_keys, function( i, new_key ) {
-					if( $.inArray(new_key, exist_keys ) < 0  )
-					{
-						get_stats_by_key( new_key );
-						hash += new_key + ",";
-					}
+                $.each( new_keys, function( i, new_key ) {
+                    if( $.inArray(new_key, exist_keys ) < 0  )
+                    {
+                        get_stats_by_key( new_key );
+                        hash += new_key + ",";
+                    }
                 } );
-				if( window.location.hash != hash )
-					window.location = hash ;
+                if( window.location.hash !== hash )
+                    window.location = hash ;
 
-				//restore previous selection
-				item.val( prev_val );
+                //restore previous selection
+                item.val( prev_val );
             }
 
             function get_stats()
             {
                 var new_key =  get_key_from_selection();
-				var hash_keys = prepare_hash_and_get_exist_keys();
-				var hash = hash_keys[0];
+                var hash_keys = prepare_hash_and_get_exist_keys();
+                var hash = hash_keys[0];
                 var exist_keys = hash_keys[1];
-				if( $.inArray(new_key, exist_keys ) < 0  )
-				{
-					get_stats_by_key( new_key );
-					hash += new_key + ",";
+                if( $.inArray(new_key, exist_keys ) < 0  )
+                {
+                    get_stats_by_key( new_key );
+                    hash += new_key + ",";
                 }
 
-				if( window.location.hash != hash )
-					window.location = hash ;
+                if( window.location.hash !== hash )
+                    window.location = hash ;
             }
 
-			var ALLBON = {};
-			var ALLFAV = {};
+            var ALLBON = {};
+            var ALLFAV = {};
 
             $( document ).ready( function() {
 
-				$("#BON").children().each( function( i, opt ) { ALLBON[opt.value] = opt.text } );
-				$("#FAV").children().each( function( i, opt ) { ALLFAV[opt.value] = opt.text } );
+                $("#BON").children().each( function( i, opt ) { ALLBON[opt.value] = opt.text; } );
+                $("#FAV").children().each( function( i, opt ) { ALLFAV[opt.value] = opt.text; } );
                 var s = $("#faction");
                 //$("<option/>", { value: '.', text:'All' } ).appendTo( s );
                 for( var i = 0; i< factions.length; i++ )
@@ -378,35 +476,35 @@
                 //$("#stats").height( $(window).height() - $("#header").height() - 10 );
 
             });
-			window.onpopstate = function( e ) {
-                var hash = window.location.hash
+            window.onpopstate = function( e ) {
+                var hash = window.location.hash;
                 var exist_keys = hash.substr(1).split(",");
-				$(".stat").each( function( i, tr ) {
-					if( $.inArray(tr.id, exist_keys ) < 0  )
-					{
-						tr.remove();
-					}
-				});
-				$(".stat-cont tbody").each( function( ) {
-					if( this.children.length == 1 )
-					{
-						$(this).parent().parent().remove();
-					}
-				});
-				$.each( exist_keys, function( i, key ) {
-					if( key != "" && document.getElementById(key) == null )
-					{
-						get_stats_by_key( key );
-					}
+                $(".stat").each( function( i, tr ) {
+                    if( $.inArray(tr.id, exist_keys ) < 0  )
+                    {
+                        tr.remove();
+                    }
+                });
+                $(".stat-cont tbody").each( function( ) {
+                    if( this.children.length === 1 )
+                    {
+                        $(this).parent().parent().remove();
+                    }
+                });
+                $.each( exist_keys, function( i, key ) {
+                    if( key !== "" && document.getElementById(key) === null )
+                    {
+                        get_stats_by_key( key );
+                    }
 
-				} );
+                } );
 
-			};
-			/*
+            };
+            /*
             $(window).resize( function() {
                 $("#stats").height($(window).height() - $("#header").height() -10  );
             });
-			*/
+            */
         </script>
         <style type="text/css">
             .tooltip {
@@ -435,22 +533,85 @@
         <div id="header" >
             Choose Faction, Player count, Rating (per faction), first round buildings (that they passed with), 0th round BON tiles and any round 1 FAV.
             Press "Stats!" to calculate for the selected restrictions.<br>
-			Pressing "Enumerate" under a field will step through every option in that field while keeping the selection in the other fields.<br>
+            Pressing "Enumerate" under a field will step through every option in that field while keeping the selection in the other fields.<br>
             Checkboxes mean "strictly" equal to that value, otherwise its equal or greater.
-			"VP" is the raw score at the end of the game. "Margin" is [ score - (that game's avg score)]<br>
-			Hover over a statistic to view the standard deviation. Linking to a page with the above URL will re-calculate the stats when loading.
-        <table><tr><th>Faction</th>
-                <th>Player Count</th>
-                <th>Rating Quartile</th>
-                <th>D <input id="D_strict"  type="checkbox" /></th>
-                <th>TP<input id="TP_strict" type="checkbox" /></th>
-                <th>TE<input id="TE_strict" type="checkbox" /></th>
-                <th>SA<input id="SA_strict" type="checkbox" /></th>
-                <th>SH<input id="SH_strict" type="checkbox" /></th>
-                <th>Starting BON</th>
-                <th>FAV</th>
-            </tr>
-            <tr><td><select id="faction" multiple></select></td>
+            "VP" is the raw score at the end of the game. "Margin" is [ score - (that game's avg score)]<br>
+            Hover over a statistic to view the standard deviation. Linking to a page with the above URL will re-calculate the stats when loading.
+        <table>
+            <tr><th>Map Type</th><th>Cultists Errata</th><th>TW6-8</th><th>BON10</th><th>Ice</th><th>Volcano</th><th>Variable</th></tr>
+            <tr><td>
+                <select id="map" multiple>
+                    <option value='a'>Original
+                    <option value='b'>Fire & Ice, Side 1
+                    <option value='c'>Fire & Ice, Side 2
+                </select></td>
+                <td><select id="cultists" multiple>
+                    <option value='0'>before
+                    <option value='1'>after
+                </select></td>
+                <td><select id="useTW" multiple>
+                    <option value='0'>none
+                    <option value='1'>available
+                </select></td>
+                <td><select id="useBON10" multiple>
+                    <option value='0'>none
+                    <option value='1'>available
+                </select></td>
+                <td><select id="ice" multiple>
+                    <option value='0'>none
+                    <option value='1'>available
+                </select></td>
+                <td><select id="volcano" multiple>
+                    <option value='0'>none
+                    <option value='1'>available
+                </select></td>
+                <td><select id="variable" multiple>
+                    <option value='0'>none
+                    <option value='1'>available
+                    <option value='2'>available(testing v2)
+                    <option value='3'>available(testing v3)
+                    <option value='4'>available(testing v4)
+                    <option value='5'>available(currently v5)
+                </select></td>
+              </tr>
+              <tr>
+                <td><input type="button" onclick="enumerate('map')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('cultists')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('useTW')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('useBON10')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('ice')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('volcano')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('variable')" value="Enumerate"/></td>
+              </tr>
+            </table>
+            <table>
+              <tr><th>Passing Order</th>
+                <th>SCORE9(TE>>4)</th><th>Scoring at R1</th><th>Addtional Scoring</th>
+                <th>Player Count</th><th>Starting Order</th></tr>
+              <tr>
+                <td><select id="passing_order" multiple>
+                    <option value='0'>none
+                    <option value='1'>available
+                </select></td>
+                <td><select id="score9" multiple>
+                    <option value='0'>none
+                    <option value='1'>available
+                </select></td>
+                <td><select id="score1" multiple>
+                    <option value='1'>S1 SPD>>2 1Earth->1c
+                    <option value='2'>S2 TOWN>>5 4Earth->1Spade
+                    <option value='3'>S3 D>>2 4Water->1P
+                    <option value='4'>S4 SA/SH>>5 2Fire->1w
+                    <option value='5'>S5 D>>2 4Fire->4pw
+                    <option value='6'>S6 TP>>3 4Water->1Spade
+                    <option value='7'>S7 S7 SA/SH>>5 2Air->1w
+                    <option value='8'>S8 S8 TP>>3 4Air->1Spade
+                    <option value='9'>S9 TE>>4 1Cult_P->2c
+                </select></td>
+                <td><select id="additional" multiple>
+                    <option value='0'>none
+                    <option value='1'>used
+                </select></td>
                 <td><select id="pcount" multiple >
                         <option value='1'>1
                         <option value='2'>2
@@ -460,6 +621,40 @@
                         <option value='6'>6
                         <option value='7'>7
                     </select></td>
+                <td><select id="order1" multiple>
+                    <option value='1'>1
+                    <option value='2'>2
+                    <option value='3'>3
+                    <option value='4'>4
+                    <option value='5'>5
+                    <option value='6'>6
+                    <option value='7'>7
+                </select></td>
+            </tr>
+            <tr>
+                <td><input type="button" onclick="enumerate('passing_order')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('score9')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('score1')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('additional')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('pcount')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('order1')" value="Enumerate"/></td>
+            </tr>
+        </table>
+        <table>
+            <tr>
+                <th>Faction</th>
+                <th>Rating Quartile</th>
+                <th>D <input id="D_strict"  type="checkbox" /></th>
+                <th>TP<input id="TP_strict" type="checkbox" /></th>
+                <th>TE<input id="TE_strict" type="checkbox" /></th>
+                <th>SA<input id="SA_strict" type="checkbox" /></th>
+                <th>SH<input id="SH_strict" type="checkbox" /></th>
+                <th>Starting BON</th>
+                <th>Leech:pw at R1</th>
+                <th>FAV</th>
+            </tr>
+            <tr>
+                <td><select id="faction" multiple></select></td>
                 <td><select id="rating"  multiple >
                         <option value='3'>Best
                         <option value='2'>Good
@@ -483,6 +678,13 @@
                         <option value='8'>BON9  (D VP)
                         <option value='9'>BON10 (Ship VP)
                     </select></td>
+                <td><select id="leech1" multiple>
+                    <option value='0'>0-3
+                    <option value='1'>4-7
+                    <option value='2'>8-11
+                    <option value='3'>12-15
+                    <option value='4'>16+
+                </select></td>
                 <td><select id="FAV" multiple >
                         <option value='1'>FAV1  (F3)
                         <option value='2'>FAV2  (W3)
@@ -498,26 +700,29 @@
                         <option value='c'>FAV12 (A1)
                     </select></td>
             </tr>
-            <tr><td><input type="button" onclick="enumerate('faction')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('pcount')" value="Enumerate"/></td>
+            <tr>
+                <td><input type="button" onclick="enumerate('faction')" value="Enumerate"/></td>
                 <td><input type="button" onclick="enumerate('rating')" value="Enumerate"/></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
                 <td><input type="button" onclick="enumerate('BON')" value="Enumerate"/></td>
+                <td><input type="button" onclick="enumerate('leech1')" value="Enumerate"/></td>
                 <td><input type="button" onclick="enumerate('FAV')" value="Enumerate"/></td>
             </tr>
+        </table>
+        <table>
             <tr>
                 <td> <input type="button" onclick="get_stats()" value="Stats!" /></td>
-                <td> <input type="button" onclick="$('#stats').empty();window.location='#'" value="Clear" />
-                <span id="error" style="display:none">No Matches!</span> </td>
+                <td> <input type="button" onclick="$('#stats').empty();window.location='#'" value="Clear" /></td>
+                <td> <span id="error" style="display:none">No Matches!</span> </td>
             </tr>
         </table>
     </div>
 
-        <div id=stats style="
+        <div id="stats" style="
             display:-webkit-flex;
             display:flex;
             -webkit-flex-direction:row;
