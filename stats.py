@@ -8,12 +8,12 @@ GAME_PATH="games"
 GAME_FILENAME = "games.pickle.gz"
 
 mapdict={
-  u'126fe960806d587c78546b30f1a90853b1ada468': 0, # Original
-  u'95a66999127893f5925a5f591d54f8bcb9a670e6': 1, # Fire & Ice, Side 1
-  u'be8f6ebf549404d015547152d5f2a1906ae8dd90': 2, # Fire & Ice, Side 2
-  u'b109f78907d2cbd5699ced16572be46043558e41': 3, # illegal map game=nan0002
-  u'735b073fd7161268bb2796c1275abda92acd8b1a': 4, # illegal map game=gareth44,expm28
-  u'30b6ded823e53670624981abdb2c5b8568a44091': 5} # illegal map game=gareth45
+  u'126fe960806d587c78546b30f1a90853b1ada468': 'a', # Original
+  u'95a66999127893f5925a5f591d54f8bcb9a670e6': 'b', # Fire & Ice, Side 1
+  u'be8f6ebf549404d015547152d5f2a1906ae8dd90': 'c', # Fire & Ice, Side 2
+  u'b109f78907d2cbd5699ced16572be46043558e41': 'd', # illegal map game=nan0002
+  u'735b073fd7161268bb2796c1275abda92acd8b1a': 'e', # illegal map game=gareth44,expm28
+  u'30b6ded823e53670624981abdb2c5b8568a44091': 'f'} # illegal map game=gareth45
 
 blacklist=[
   "nan0002", #base_map=b109f78907d2cbd5699ced16572be46043558e41
@@ -22,6 +22,17 @@ blacklist=[
   "gareth45", #base_map=30b6ded823e53670624981abdb2c5b8568a44091
   "Bgg50", # bridged more than 3
   "DaveMattDouble2", # bridged more than 3
+  "wayne", # invalid score tiles
+  "JogaGREat5", # CM double pass bug
+  "JogaGreat4", # CM double pass bug
+  "PenisEnvy1", # CM double pass bug
+  "JG9", # CM double pass bug
+  "sky05", # CM double pass bug
+  "JG10", # CM double pass bug
+  "Terra4m", # CM double pass bug
+  "Tools001", # CM double pass bug
+  "DvMvRvB4", # CM double pass bug
+  "marcelp24", # CM double pass bug
   ]
 
 class FactionStat(object):
@@ -36,25 +47,13 @@ class FactionStat(object):
         avgscore = float( game["events"]["faction"]["all"]["vp"]["round"]["all"] ) / self.numplayers + 20
         self.margin = self.score  - avgscore
         self.map_type = mapdict[game["base_map"]]
-        self.additional_score = 1 if "option-fire-and-ice-final-scoring" in game["events"]["global"] else 0
-        self.ice_available = 1 if "option-fire-and-ice-factions/ice" in game["events"]["global"] else 0
-        self.volcano_available = 1 if "option-fire-and-ice-factions/volcano" in game["events"]["global"] else 0
-        if "option-fire-and-ice-factions/variable_v5" in game["events"]["global"]:
-            self.variable_version = 5
-        elif "option-fire-and-ice-factions/variable_v4" in game["events"]["global"]:
-            self.variable_version = 4
-        elif "option-fire-and-ice-factions/variable_v3" in game["events"]["global"]:
-            self.variable_version = 3
-        elif "option-fire-and-ice-factions/variable_v2" in game["events"]["global"]:
-            self.variable_version = 2
-        elif "option-fire-and-ice-factions/variable" in game["events"]["global"]:
-            self.variable_version = 1
-        else:
-            self.variable_version = 0
 
         self.parse_events()
-        self.orders = numpy.array( [ self.parse_order( i ) for i in range(1,8) ] )
+        self.orders =  self.parse_order()
+        self.options = {}
+        self.score_tiles = {}
         self.parse_global( game["events"]["global"] )
+        self.parse_players( game["factions"] )
         del self.events #don't need this anymore!
 
     def parse_event(self, evt ):
@@ -86,12 +85,23 @@ class FactionStat(object):
         r = defaultdict(int,self.events[key]["round"])
         return numpy.array((r["0"],r["1"],r["2"],r["3"],r["4"],r["5"],r["6"] ))
 
-    def parse_order( self, num ):
-        key = "order:"+str(num)
-        if key not in self.events:
-            return numpy.zeros( 6 )
-        r = defaultdict(int,self.events[key]["round"])
-        return numpy.array((r["1"]*num,r["2"]*num,r["3"]*num,r["4"]*num,r["5"]*num,r["6"]*num ))
+    def parse_order( self ):
+        result = {}
+        for num in range(1, 8):
+            key = "order:"+str(num)
+            if key not in self.events:
+                continue
+            r = self.events[key]["round"].keys()
+            r.remove("all")
+            for k in r:
+                result[str(k)] = num
+        return result
+
+    def parse_leech( self ):
+        pw = []
+        for k in self.parse_event( "leech:pw" ):
+            pw.append(min(4, int(k/4)))
+        return pw
 
     def parse_events( self ):
         D_evt  = self.parse_event( "build:D" )
@@ -116,23 +126,46 @@ class FactionStat(object):
         #each round, which BON
         self.BON = tuple( numpy.where( numpy.array( [ self.parse_bonus( i ) for i in range(1,11) ] ).transpose() == 1 )[1] )
         
-        self.leech_pw = self.parse_event( "leech:pw" )
+        self.leech_pw = self.parse_leech()
+        
 
     def parse_global( self, global_ ):
-        self.options = {}
-        self.score_tiles = {}
         for k,v in global_.items():
-            if "options-" in k:
-                opt_key = k.replace("options-", "")
-                if opt_key.startwith("fire-and-ice-factions/variable_v"):
-                    self.options["option-fire-and-ice-factions/variable"] = int(opt_key.replace("fire-and-ice-factions/variable_v", ""))
+            if "option-" in k:
+                opt_key = k.replace("option-", "")
+                if opt_key.startswith("fire-and-ice-factions/variable_v"):
+                    self.options["fire-and-ice-factions/variable"] = opt_key.replace("fire-and-ice-factions/variable_v", "")
                 else:
-                    self.options[opt_key] = 1
+                    self.options[opt_key] = '1'
             if "SCORE" in k:
                 sid = int(k.replace("SCORE", ""))
                 for r in range(1,7):
                     if str(r) in v["round"]:
                         self.score_tiles[str(r)] = sid
+        #self.options["fi-factions/ice"] = 1 if "option-fire-and-ice-factions/ice" in global_ else 0
+        #self.options["fi-factions/volcano"] = 1 if "option-fire-and-ice-factions/volcano" in global_ else 0
+        #if "option-fire-and-ice-factions/variable_v5" in global_:
+        #    self.self.options["fi-factions/variable"] = 5
+        #elif "option-fire-and-ice-factions/variable_v4" in global_:
+        #    self.self.options["fi-factions/variable"] = 4
+        #elif "option-fire-and-ice-factions/variable_v3" in global_:
+        #    self.self.options["fi-factions/variable"] = 3
+        #elif "option-fire-and-ice-factions/variable_v2" in global_:
+        #    self.self.options["fi-factions/variable"] = 2
+        #elif "option-fire-and-ice-factions/variable" in global_:
+        #    self.self.options["fi-factions/variable"] = 1
+        #else:
+        #    self.self.options["fi-factions/variable"] = 0
+    def parse_players( self, factions ):
+        players = []
+        for faction in factions:
+            if faction[u"player"] == None:
+                players.append(u"anon-"+faction[u"faction"])
+            else:
+                players.append(faction[u"player"])
+        self.multifaction = 1 if len(list(set(players))) != len(players) else 0
+        #if self.multifaction == 1:
+        #    print players
 
 def load():
     allstats = []
@@ -168,7 +201,7 @@ def parse_game_file( game_fn ):
                 continue
             game["factions2"] = f;
             if game["game"] in blacklist:
-                print("Skipping illegal game:"+game["game"])
+                print("Skipping irregular game: "+game["game"])
                 continue
             for faction in f.keys():
                 if faction[:6] == "nofact":
@@ -176,7 +209,10 @@ def parse_game_file( game_fn ):
                 try:
                     s =  FactionStat( game, faction ) 
                     if s.BON: #Empty player count?
-                        stats.append( s )
+                        if s.multifaction == 0:
+                            stats.append( s )
+                        else:
+                            print "Player of this game plays multi factions: "+s.game_id
                 except KeyError,e :
                     print( game_fn + " failed! ("+faction+" didn't have "+str(e.args)+")" )
                     import pdb
@@ -253,19 +289,48 @@ fdict= {u'acolytes': 'a',
  u'yetis': 't'}
 
 def get_key( faction ):
+    # all option at 2016-07-05
+    #option-email-notify:
+    #option-errata-cultist-power:
+    #option-fire-and-ice-factions/ice:
+    #option-fire-and-ice-factions/variable:
+    #option-fire-and-ice-factions/variable_v2:
+    #option-fire-and-ice-factions/variable_v3:
+    #option-fire-and-ice-factions/variable_v4:
+    #option-fire-and-ice-factions/variable_v5:
+    #option-fire-and-ice-factions/volcano:
+    #option-fire-and-ice-final-scoring:
+    #option-loose-adjust-resource:
+    #option-maintain-player-order:
+    #option-mini-expansion-1:
+    #option-shipping-bonus:
+    #option-strict-chaosmagician-sh:
+    #option-strict-darkling-sh:
+    #option-strict-leech:
+    #option-temple-scoring-tile:
+    #option-variable-turn-order:
+
     #print faction.score_tiles
     key = ""
-    key += str(faction.map_type)
-    key += str(faction.additional_score)
-    key += str(faction.score_tiles["1"])
-    key += str(faction.orders[1])
-    key += str(fdict[faction.name])
-    key += str( faction.numplayers )
-    key += str( get_rating( faction.user, faction.name ))
-    key += "".join( str(i) for i in tuple(faction.B[:,1]))
-    key += str(faction.BON[0])
-    key += "{0:0>2}".format(int(faction.leech_pw[1]))
-    key += "".join( hex(i+1)[-1] for i in tuple(numpy.where( faction.FAV == 1 )[0]))
+    key += str(faction.map_type) #0
+    key += "0" if "errata-cultist-power" not in faction.options else "1" #1
+    key += "0" if "mini-expansion-1" not in faction.options else "1" #2
+    key += "0" if "shipping-bonus" not in faction.options else "1" #3
+    key += "0" if "fire-and-ice-final-scoring" not in faction.options else "1" #4
+    key += "0" if "fire-and-ice-factions/ice" not in faction.options else "1" #5
+    key += "0" if "fire-and-ice-factions/volcano" not in faction.options else "1" #6
+    key += "0" if "fire-and-ice-factions/variable" not in faction.options else str(faction.options["fire-and-ice-factions/variable"]) #7
+    key += "0" if "variable-turn-order" not in faction.options else "1" #8
+    key += "0" if "temple-scoring-tile" not in faction.options else "1" #9
+    key += str(faction.score_tiles["1"]) #10
+    key += str(faction.orders["1"]) #11
+    key += str(fdict[faction.name]) #12
+    key += str( faction.numplayers ) #13
+    key += str( get_rating( faction.user, faction.name )) #14
+    key += "".join( str(i) for i in tuple(faction.B[:,1])) #15-19
+    key += str(faction.BON[0]) #20
+    key += str(faction.leech_pw[1]) #21
+    key += "".join( hex(i+1)[-1] for i in tuple(numpy.where( faction.FAV == 1 )[0])) #22-
     return key
 
 
@@ -274,7 +339,8 @@ def get_statpool( allstats, statfuncs ):
     statbase = [ Welford() for x in statfuncs ]
     for faction in allstats:
         if "1" not in faction.score_tiles:
-            print "invalid score tiles:"+faction.game_id
+            print "invalid score tiles: "+faction.game_id
+            continue
         key  = get_key(faction)
         stats = statpool.setdefault( key, copy.deepcopy( statbase ) )
         for i,statfunc in enumerate(statfuncs):
