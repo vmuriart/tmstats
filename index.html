@@ -95,7 +95,7 @@
                     }
                     else if( regex_str[i] === ']' )
                     {
-                        chunks.push( gchunk )
+                        chunks.push( gchunk );
                         ing = false;
                     }
                     else if( regex_str[i] === '^' )
@@ -226,7 +226,7 @@
 
                     function building_str( chunk, build )
                     {
-                        if( chunk === '.')       return ""
+                        if( chunk === '.')       return "";
                         if( chunk.length === 1 )
                         {
                             if( chunk === '1' )
@@ -283,39 +283,41 @@
 
                     var tooltip = BON + " " + FAV;
 
+                    var table = $("#stats_tab");
+                    if ( !table.exists() ) {
+                        table = $("<table>",{id:"stats_tab",class:"stat-cont",style:"font-family: 'Courier New', monospace;border-collapse:collapse"});
+                        $("#stats").append(table);
+                    }
                     var section = $("#"+fact );
-                    var cont    = $("#cont-"+fact );
                     if( !section.exists() )
                     {
-                        section = $("<table>",{id:fact,class:"stat-cont",style:"font-family: 'Courier New', monospace;border-collapse:collapse"});
-                        cont = $("<div>",{id:"cont-"+fact,style:"width:600px"});
-                        cont.append( section );
-                        var header = $("<tr style='border-bottom:1px solid gray;'>");
-                            header.append( "<th           style='text-align:left; font-family:serif;width:120px;'>"+fact );
-                            header.append( "<th>Map." );
-                            header.append( "<th>errata<br>(cultists)" );
-                            header.append( "<th>Options." );
-                            header.append( "<th>Rat." );
-                            header.append( "<th>R1:Score" );
-                            header.append( "<th>R1:Order" );
-                            header.append( "<th>R1:leechPw" );
-                            header.append( "<th           style='border-left:1px solid gray;'>Desc." );
-                            header.append( "<th colspan=3 style='border-left:1px solid gray;width:120px;'>VP" );
-                            header.append( "<th colspan=3 style='border-left:1px solid gray;width:120px;'>Margin" );
-                            header.append( "<th colspan=1 style='border-left:1px solid gray;'>Count" );
+                        section = $("<tbody>",{id:fact,class:"stat-cont",style:"font-family: 'Courier New', monospace;border-collapse:collapse; margin-top: 20px;"});
+                        var header = $("<tr>",{style:"border-bottom:1px solid gray;"});
+                            header.append( "<th style='text-align:left; font-family:serif;width:8em;'>"+fact );
+                            header.append( "<th style='border-left:1px solid gray;width:4em;'>Map." );
+                            header.append( "<th style='border-left:1px solid gray;'>Cultists<br>errata" );
+                            header.append( "<th style='border-left:1px solid gray;width:8em;'>Options." );
+                            header.append( "<th style='border-left:1px solid gray;'>Rat." );
+                            header.append( "<th style='border-left:1px solid gray;'>R1:Score" );
+                            header.append( "<th style='border-left:1px solid gray;'>R1:Order" );
+                            header.append( "<th style='border-left:1px solid gray;'>R1:leechPw" );
+                            header.append( "<th style='border-left:1px solid gray;width:6em;'>Desc." );
+                            header.append( "<th colspan=3 style='border-left:1px solid gray;width:10em;'>VP" );
+                            header.append( "<th colspan=3 style='border-left:1px solid gray;width:11em;'>Margin" );
+                            header.append( "<th colspan=1 style='border-left:1px solid gray;width:6em;'>Count" );
                         section.append( header );
-                        $("#stats").append( cont );
+                        $("#stats_tab").append( section );
                     }
 
                     var row = $("<tr>", {id:key_pattern,class:'stat'});
-                        row.append( "<td>" +pcnt );
-                        row.append( "<td>"+map_type );
-                        row.append( "<td>"+cultists_errata);
-                        row.append( "<td>"+option_desc);
-                        row.append( "<td>"+ rate );
-                        row.append( "<td>"+ scoring_r1 );
-                        row.append( "<td>"+ order_r1 );
-                        row.append( "<td>"+ leech1 );
+                        row.append( "<td style=''>" +pcnt );
+                        row.append( "<td style='border-left:1px solid gray;'>"+map_type );
+                        row.append( "<td style='border-left:1px solid gray;'>"+cultists_errata );
+                        row.append( "<td style='border-left:1px solid gray;'>"+option_desc);
+                        row.append( "<td style='border-left:1px solid gray;'>"+ rate );
+                        row.append( "<td style='border-left:1px solid gray;'>"+ scoring_r1 );
+                        row.append( "<td style='border-left:1px solid gray;'>"+ order_r1 );
+                        row.append( "<td style='border-left:1px solid gray;'>"+ leech1 );
                         row.append( "<td class='data' style='text-align:left'>"+desc+"<span class='tooltip'>"+tooltip+"</span>" );
 
                         row.append( "<td class='data'>" +ret[0].mean().toFixed(2)+"<span class='tooltip'>Standard Deviation:"+ret[0].std().toFixed(2)+"</span>");
@@ -330,7 +332,7 @@
 
                     section.append( row );
 
-                    cont.height( section.height() +2 );
+                    table.height( section.height() +2 );
                 }
             }
 
@@ -604,8 +606,8 @@
                     <option value='4'>S4 SA/SH>>5 2Fire->1w
                     <option value='5'>S5 D>>2 4Fire->4pw
                     <option value='6'>S6 TP>>3 4Water->1Spade
-                    <option value='7'>S7 S7 SA/SH>>5 2Air->1w
-                    <option value='8'>S8 S8 TP>>3 4Air->1Spade
+                    <option value='7'>S7 SA/SH>>5 2Air->1w
+                    <option value='8'>S8 TP>>3 4Air->1Spade
                     <option value='9'>S9 TE>>4 1Cult_P->2c
                 </select></td>
                 <td><select id="additional" multiple>
@@ -656,10 +658,10 @@
             <tr>
                 <td><select id="faction" multiple></select></td>
                 <td><select id="rating"  multiple >
-                        <option value='3'>Best
-                        <option value='2'>Good
-                        <option value='1'>Poor
-                        <option value='0'>Bad
+                        <option value='3'>Best(1250-)
+                        <option value='2'>Good(1100-1249)
+                        <option value='1'>Poor(1000-1099)
+                        <option value='0'>Bad(0-999)
                     </select></td>
                 <td><input id="D"  type="number" value=0 min=0 max=9 /></td>
                 <td><input id="TP" type="number" value=0 min=0 max=4 /></td>
@@ -721,16 +723,11 @@
             </tr>
         </table>
     </div>
-
         <div id="stats" style="
             display:-webkit-flex;
             display:flex;
-            -webkit-flex-direction:row;
-            -direction:row;
-            flex-start;
-            -content:flex-start;
-            ap:wrap;
-            flex-wrap:wrap;
+            -webkit-flex-direction: column;
+            flex-direction: column;
             ">
         </div>
 
