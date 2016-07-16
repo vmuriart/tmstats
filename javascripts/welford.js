@@ -11,7 +11,7 @@ function Welford( init )
     else if( typeof(init) == "number" )
     {
         this.n = 1;
-        this.M1 = init/10;
+        this.M1 = init;
         this.M2 = 0;
         this.M3 = 0;
         this.M4 = 0;
@@ -19,10 +19,10 @@ function Welford( init )
     else
     {
         this.n = init[0];
-        this.M1 = init[1]/10;
-        this.M2 = init[2]/10;
-        this.M3 = init[3]/10;
-        this.M4 = init[4]/10;
+        this.M1 = init[1];
+        this.M2 = init[2];
+        this.M3 = init[3];
+        this.M4 = init[4];
     }
 
 }
