@@ -18,6 +18,10 @@ mapdict={
   u'c07f36f9e050992d2daf6d44af2bc51dca719c46': 'h'} # Loon Lakes v1.5
 
 blacklist=[
+  "nan0002", #testing map b109f78907d2cbd5699ced16572be46043558e41
+  "gareth44", #testing map 735b073fd7161268bb2796c1275abda92acd8b1a
+  "expm28", #testing map 735b073fd7161268bb2796c1275abda92acd8b1a
+  "gareth45", #testing map 30b6ded823e53670624981abdb2c5b8568a44091
   "Bgg50", # bridged more than 3
   "DaveMattDouble2", # bridged more than 3
   "wayne", # invalid score tiles
