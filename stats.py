@@ -203,7 +203,7 @@ def save( allstats ):
     print >> sys.stderr, "done!"
 
 def parse_game_file( game_fn ):
-    debug = True
+    debug = false
     if debug:
         print "game_id,faction,result_key,vp,margin,R1,R2,R3,R4,R5,R6"
     stats = []
