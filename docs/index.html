@@ -143,14 +143,12 @@
 
                     var chunks = get_regex_chunks( key_pattern );
 
-                    var map_type = 'any';
+                    var map_type = 'multi';
                     if ( chunks[0] === 'a' ) map_type = 'Original';
                     else if ( chunks[0] === 'b' ) map_type = 'F&I Side 1';
                     else if ( chunks[0] === 'c' ) map_type = 'F&I Side 2';
-                    else if ( chunks[0] === 'ab' ) map_type = 'Org, F&I1';
-                    else if ( chunks[0] === 'ac' ) map_type = 'Org, F&I2';
-                    else if ( chunks[0] === 'bc' ) map_type = 'F&I Side 1,2';
-                    else if ( chunks[0] === 'a-c' ) map_type = 'any';
+                    else if ( chunks[0] === 'h' ) map_type = 'Loon Lakes v1.5';
+                    else if ( chunks[0] === '.' ) map_type = 'any';
 
                     var cultists_errata = 'both';
                     if ( chunks[1] === '0' ) cultists_errata = 'w/o eratta';
@@ -262,7 +260,7 @@
                     if (leech1 === '234') leech1 = '8+';
                     if (leech1 === '34') leech1 = '12+';
 
-                    var FAV = chunks[22];
+                    var FAV = chunks[25];
                     if( FAV === "." || FAV === undefined ) FAV = "";
 
                     var strBON = [];
@@ -293,7 +291,7 @@
                     {
                         section = $("<tbody>",{id:fact,class:"stat-cont",style:"font-family: 'Courier New', monospace;border-collapse:collapse; margin-top: 20px;"});
                         var header = $("<tr>",{style:"border-bottom:1px solid gray;"});
-                            header.append( "<th style='text-align:left; font-family:serif;'>"+fact );
+                            header.append( "<th style='text-align:left; font-family:serif;width:8em;'>"+fact );
                             header.append( "<th style='border-left:1px solid gray;width:4em;'>Map." );
                             header.append( "<th style='border-left:1px solid gray;'>Cultists<br>errata" );
                             header.append( "<th style='border-left:1px solid gray;width:8em;'>Options." );
@@ -375,6 +373,7 @@
                 var scoring_r1 = get_multi_select_key( "score1" );
                 var orders_r1 = get_multi_select_key( "order1" );
                 var leech_pw_r1 = get_multi_select_key( "leech1" );
+                var period = "...";
 
                 //Favors are optional and can be in any order
                 if( FAVpat )
@@ -403,6 +402,7 @@
                     building_key("SH") +
                     BONpat + 
                     leech_pw_r1 +
+                    period +
                     FAVpat 
                     ;
                 return key_pattern;
@@ -546,6 +546,7 @@
                     <option value='a'>Original
                     <option value='b'>Fire & Ice, Side 1
                     <option value='c'>Fire & Ice, Side 2
+                    <option value='h'>Loon Lakes v1.5
                 </select></td>
                 <td><select id="cultists" multiple>
                     <option value='0'>before
@@ -645,7 +646,7 @@
         <table>
             <tr>
                 <th>Faction</th>
-                <th>Player Rating</th>
+                <th>Rating Quartile</th>
                 <th>D <input id="D_strict"  type="checkbox" /></th>
                 <th>TP<input id="TP_strict" type="checkbox" /></th>
                 <th>TE<input id="TE_strict" type="checkbox" /></th>
