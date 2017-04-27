@@ -74,7 +74,7 @@
                 var strict = $("#"+type+"_strict");
                 if( strict.prop('checked') ) return item.val();
                 if( item.val() === "0" ) return ".";
-                return"[" + item.val() +"-9]";
+                return"[" + item.val() +"-"+item.attr('max')+"]";
             }
 
             function get_regex_chunks( regex_str )
@@ -143,14 +143,12 @@
 
                     var chunks = get_regex_chunks( key_pattern );
 
-                    var map_type = 'any';
+                    var map_type = 'multi';
                     if ( chunks[0] === 'a' ) map_type = 'Original';
                     else if ( chunks[0] === 'b' ) map_type = 'F&I Side 1';
                     else if ( chunks[0] === 'c' ) map_type = 'F&I Side 2';
-                    else if ( chunks[0] === 'ab' ) map_type = 'Org, F&I1';
-                    else if ( chunks[0] === 'ac' ) map_type = 'Org, F&I2';
-                    else if ( chunks[0] === 'bc' ) map_type = 'F&I Side 1,2';
-                    else if ( chunks[0] === 'a-c' ) map_type = 'any';
+                    else if ( chunks[0] === 'h' ) map_type = 'Loon Lakes v1.5';
+                    else if ( chunks[0] === '.' ) map_type = 'any';
 
                     var cultists_errata = 'both';
                     if ( chunks[1] === '0' ) cultists_errata = 'w/o eratta';
@@ -226,6 +224,8 @@
 
                     function building_str( chunk, build )
                     {
+                        var item  = $("#"+build);
+                        var max = parseInt(item.attr('max'));
                         if( chunk === '.')       return "";
                         if( chunk.length === 1 )
                         {
@@ -233,7 +233,10 @@
                                 return build;
                             return chunk+build;
                         }
-                        return chunk[0]+build;
+                        if (chunk === max+"-"+max) {
+                            return max+build;
+                        }
+                        return chunk+build;
                     }
                     var BUILD = 
                         building_str( chunks[15], "D" ) +
@@ -266,7 +269,26 @@
                     //if (position === '.') position = "any";
                     
                     var period = (chunks[22] || '.')+(chunks[23] || '.')+(chunks[24] || '.');
-                    if (period === "...") period = "any";
+                    if (period === "...") {
+                        period = "any";
+                    } else {
+                        period = "20"+chunks[22]+chunks[23]+" ";
+                        switch(chunks[24]) {
+                            case '1': period += "Jan"; break;
+                            case '2': period += "Feb"; break;
+                            case '3': period += "Mar"; break;
+                            case '4': period += "Apr"; break;
+                            case '5': period += "May"; break;
+                            case '6': period += "Jun"; break;
+                            case '7': period += "Jul"; break;
+                            case '8': period += "Aug"; break;
+                            case '9': period += "Sep"; break;
+                            case 'a': period += "Oct"; break;
+                            case 'b': period += "Nov"; break;
+                            case 'c': period += "Dec"; break;
+                        }
+                    }
+                    
                     
 
                     var FAV = chunks[25];
@@ -615,8 +637,8 @@
             Hover over a statistic to view the standard deviation. Linking to a page with the above URL will re-calculate the stats when loading.
         </div>
         <table>
-            <tr><th>rating timestamp:</th><td id="rating_timestamp">2017-02-02 01:35 UTC</td></tr>
-            <tr><th>results used till:</th><td id="last_updated">Jan 2017</td></tr>
+            <tr><th>rating timestamp:</th><td id="rating_timestamp">2017-04-02 10:35 UTC</td></tr>
+            <tr><th>results used till:</th><td id="last_updated">Mar 2017</td></tr>
         </table>
         <table>
             <tr><th>Map Type</th><th>Cultists Errata</th><th>TW6-8</th><th>BON10</th><th>Ice</th><th>Volcano</th><th>Variable</th><th>Passing Order</th>
@@ -627,6 +649,7 @@
                     <option value='a'>Original
                     <option value='b'>Fire & Ice, Side 1
                     <option value='c'>Fire & Ice, Side 2
+                    <option value='h'>Loon Lakes v1.5
                 </select></td>
                 <td><select id="cultists" multiple>
                     <option value='0'>before
@@ -717,10 +740,11 @@
                 </select></td>
                 <td><select id="faction" multiple></select></td>
                 <td><select id="rating"  multiple >
-                        <option value='3'>Best(1250-)
-                        <option value='2'>Good(1100-1249)
-                        <option value='1'>Poor(1000-1099)
-                        <option value='0'>Bad(0-999)
+                        <option value='4'>Best(1250-)
+                        <option value='3'>Good(1100-1249)
+                        <option value='2'>Poor(1000-1099)
+                        <option value='1'>Bad(0-999)
+                        <option value='0'>N/A(not rated)
                     </select></td>
             </tr>
             <tr>
