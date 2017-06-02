@@ -61,10 +61,11 @@
             function key_to_rating( key )
             {
                 if( key === '.' ) return "All";
-                if( key === '0' ) return "Bad";
-                if( key === '1' ) return "Poor";
-                if( key === '2' ) return "Good";
-                if( key === '3' ) return "Best";
+                if( key === '0' ) return "N/A";
+                if( key === '1' ) return "Bad";
+                if( key === '2' ) return "Poor";
+                if( key === '3' ) return "Good";
+                if( key === '4' ) return "Best";
                 return key.split("").map(function(x){return parseInt(x)+1;}).join(",");
             }
             
