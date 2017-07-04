@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Terra Mystica Online stats summarizer"""
 import json, cPickle as pickle, os.path, numpy, sys, copy, gzip, csv
 from collections import defaultdict
 from welford import Welford
@@ -48,7 +49,7 @@ BLACKLIST = [
     "24", #early PBF
     "26", #early PBF
     "27", #early PBF
-    "5", #early PBF
+    #"5", #early PBF
     "8", #early PBF
     "9", #early PBF
     "BlaGame11", #early PBF
@@ -99,10 +100,10 @@ class FactionStat(object):
         self.period = game["last_update"][2:4] + hex(int(game["last_update"][5:7]))[-1]
         #del self.events #don't need this anymore!
 
-    def parse_event(self, events, id):
-        if id not in events:
+    def parse_event(self, events, event_id):
+        if event_id not in events:
             return numpy.zeros(7)
-        r = defaultdict(int, events[id]["round"])
+        r = defaultdict(int, events[event_id]["round"])
         return numpy.array((r["0"], r["1"], r["2"], r["3"], r["4"], r["5"], r["6"]))
 
     def parse_favor(self, events, num):
@@ -200,20 +201,6 @@ class FactionStat(object):
                 for r in range(1, 7):
                     if str(r) in v["round"]:
                         self.score_tiles[str(r)] = sid
-        #self.options["fi-factions/ice"] = 1 if "option-fire-and-ice-factions/ice" in global_ else 0
-        #self.options["fi-factions/volcano"] = 1 if "option-fire-and-ice-factions/volcano" in global_ else 0
-        #if "option-fire-and-ice-factions/variable_v5" in global_:
-        #    self.self.options["fi-factions/variable"] = 5
-        #elif "option-fire-and-ice-factions/variable_v4" in global_:
-        #    self.self.options["fi-factions/variable"] = 4
-        #elif "option-fire-and-ice-factions/variable_v3" in global_:
-        #    self.self.options["fi-factions/variable"] = 3
-        #elif "option-fire-and-ice-factions/variable_v2" in global_:
-        #    self.self.options["fi-factions/variable"] = 2
-        #elif "option-fire-and-ice-factions/variable" in global_:
-        #    self.self.options["fi-factions/variable"] = 1
-        #else:
-        #    self.self.options["fi-factions/variable"] = 0
         self.dropped_players = global_["drop-faction"]["all"] if "drop-faction" in global_ and "all" in global_["drop-faction"] else 0
 
     def parse_players(self, factions):
@@ -318,7 +305,7 @@ def parse_games(game_list=None):
             if '.json' in game:
                 allstats.extend(parse_game_file(game))
             else:
-                print >> sys.stderr, game+"is not matched"
+                print >> sys.stderr, game+" is not matched"
         except KeyboardInterrupt, e:
             break
         #except TypeError, e:
@@ -346,13 +333,13 @@ def get_rating(player, faction):
         return 0
     score = ratings[player]["score"]
     if score < 1000:
-        return 0
-    elif score < 1100:
         return 1
-    elif score < 1250:
+    elif score < 1100:
         return 2
-    else:
+    elif score < 1250:
         return 3
+    else:
+        return 4
 
 
 fdict = {
@@ -522,7 +509,7 @@ def save_raw(statpool, filename="stats.csv"):
     
 
 if __name__ == "__main__":
-    debug = True#sys.argv[0] == "-d" #False
+    debug = False #sys.argv[0] == "-d" #False
     allstats = load()
     if not allstats:
         if not os.path.isdir(GAME_PATH):
