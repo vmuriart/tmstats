@@ -190,6 +190,8 @@ class FactionStat(object):
 
     def parse_global(self, global_):
         for k, v in global_.items():
+            if "option-fire-and-ice-final-scoring" in k:
+                continue
             if "option-" in k:
                 opt_key = k.replace("option-", "")
                 if opt_key.startswith("fire-and-ice-factions/variable_v"):
@@ -201,6 +203,18 @@ class FactionStat(object):
                 for r in range(1, 7):
                     if str(r) in v["round"]:
                         self.score_tiles[str(r)] = sid
+            # Greatest Distance
+            if "scoring-connected-distance" in k:
+                self.options["fire-and-ice-final-scoring"] = 1
+            # Stringhold and Sanctuary
+            if "scoring-connected-sa-sh-distance" in k:
+                self.options["fire-and-ice-final-scoring"] = 2
+            # Outposts
+            if "scoring-building-on-edge" in k:
+                self.options["fire-and-ice-final-scoring"] = 3
+            # Settlements
+            if "scoring-connected-clusters" in k:
+                self.options["fire-and-ice-final-scoring"] = 4
         self.dropped_players = global_["drop-faction"]["all"] if "drop-faction" in global_ and "all" in global_["drop-faction"] else 0
 
     def parse_players(self, factions):
@@ -393,7 +407,7 @@ def get_key(faction):
     key += "0" if "errata-cultist-power" not in faction.options else "1" #1
     key += "0" if "mini-expansion-1" not in faction.options else "1" #2
     key += "0" if "shipping-bonus" not in faction.options else "1" #3
-    key += "0" if "fire-and-ice-final-scoring" not in faction.options else "1" #4
+    key += "0" if "fire-and-ice-final-scoring" not in faction.options else str(faction.options["fire-and-ice-final-scoring"]) #4
     key += "0" if "fire-and-ice-factions/ice" not in faction.options else "1" #5
     key += "0" if "fire-and-ice-factions/volcano" not in faction.options else "1" #6
     key += "0" if "fire-and-ice-factions/variable" not in faction.options else str(faction.options["fire-and-ice-factions/variable"]) #7
@@ -441,7 +455,7 @@ def get_key2(faction):
     key += "0" if "errata-cultist-power" not in faction.options else "1" #1
     key += "0" if "mini-expansion-1" not in faction.options else "1" #2
     key += "0" if "shipping-bonus" not in faction.options else "1" #3
-    key += "0" if "fire-and-ice-final-scoring" not in faction.options else "1" #4
+    key += "0" if "fire-and-ice-final-scoring" not in faction.options else str(faction.options["fire-and-ice-final-scoring"]) #4
     key += "0" if "fire-and-ice-factions/ice" not in faction.options else "1" #5
     key += "0" if "fire-and-ice-factions/volcano" not in faction.options else "1" #6
     key += "0" if "fire-and-ice-factions/variable" not in faction.options else str(faction.options["fire-and-ice-factions/variable"]) #7

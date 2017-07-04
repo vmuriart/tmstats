@@ -164,8 +164,11 @@
                     if (chunks[3] === '0') option_desc += 'BON10:off<br>';
                     if (chunks[3] === '1') option_desc += 'BON10:on<br>';
                     
-                    if (chunks[4] === '0') option_desc += 'FinalScoring:off<br>';
-                    if (chunks[4] === '1') option_desc += 'FinalScoring:on<br>';
+                    if (chunks[4] === '0') option_desc += 'FinalScoring:none<br>';
+                    if (chunks[4] === '1') option_desc += 'FinalScoring:distance<br>';
+                    if (chunks[4] === '2') option_desc += 'FinalScoring:sa-sh<br>';
+                    if (chunks[4] === '3') option_desc += 'FinalScoring:edge<br>';
+                    if (chunks[4] === '4') option_desc += 'FinalScoring:clusters<br>';
                     
                     if (chunks[5] === '0') option_desc += 'Ice:off<br>';
                     if (chunks[5] === '1') option_desc += 'Ice:on<br>';
@@ -639,8 +642,8 @@
             Hover over a statistic to view the standard deviation. Linking to a page with the above URL will re-calculate the stats when loading.
         </div>
         <table>
-            <tr><th>rating timestamp:</th><td id="rating_timestamp">2017-06-01 04:35 UTC</td></tr>
-            <tr><th>results used till:</th><td id="last_updated">May 2017</td></tr>
+            <tr><th>rating timestamp:</th><td id="rating_timestamp">2016-07-01 07:35 UTC</td></tr>
+            <tr><th>results used till:</th><td id="last_updated">Jun 2017</td></tr>
         </table>
         <table>
             <tr><th>Map Type</th><th>Cultists Errata</th><th>TW6-8</th><th>BON10</th><th>Ice</th><th>Volcano</th><th>Variable</th><th>Passing Order</th>
@@ -787,7 +790,10 @@
                 </select></td>
                 <td><select id="additional" multiple>
                     <option value='0'>none
-                    <option value='1'>used
+                    <option value='1'>distance
+                    <option value='2'>sa-sh
+                    <option value='3'>edge
+                    <option value='4'>clusters
                 </select></td>
                 <td><select id="pcount" multiple >
                         <option value='1'>1
