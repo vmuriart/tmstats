@@ -19,6 +19,7 @@ MAPDICT = {
     'b8a54c8e8ea3f50867297da35be5c01b9a6791d2': 'g', # Loon Lakes v1.3
     'c07f36f9e050992d2daf6d44af2bc51dca719c46': 'h', # Loon Lakes v1.5
     'fdb13a13cd48b7a3c3525f27e4628ff6905aa5b1': 'i', # Loon Lakes v1.6
+    '224736500d20520f195970eb0fd4c41df040c08c': 'j', # Fjords v1.0
     }
 
 BLACKLIST = [
@@ -97,7 +98,7 @@ class FactionStat(object):
         self.parse_players(game["factions"])
         self.num_nofactions = game["player_count"] - game["events"]["global"]["faction-count"]["round"]["all"]
         self.rank_in_game = 1
-        self.period = game["last_update"][2:4] + hex(int(game["last_update"][5:7]))[-1]
+        self.period = game["last_update"][2:4] + hex(int(game["last_update"][5:7]))[2]
         #del self.events #don't need this anymore!
 
     def parse_event(self, events, event_id):
@@ -305,7 +306,7 @@ def parse_game_file(game_fn):
                 for s in factions:
                     print game["game"]+","+s.name+","+get_key(s)+","+str(s.score)+","+str(s.margin)+","+str(s.score_tiles["1"])+","+str(s.score_tiles["2"])+","+str(s.score_tiles["3"])+","+str(s.score_tiles["4"])+","+str(s.score_tiles["5"])+","+str(s.score_tiles["6"])
             stats += factions
-    stats_fn = "stats" + game_fn[8:10] + game_fn[11:13] + ".json"
+    stats_fn = "docs/stats" + game_fn[8:10] + game_fn[11:13] + ".json"
     if not os.path.isfile(stats_fn):
         save_stats(compute_stats(stats, get_key), stats_fn)
     return stats
@@ -316,6 +317,7 @@ def parse_games(game_list=None):
         game_list = map(lambda g: GAME_PATH + os.path.sep + g, os.listdir(GAME_PATH))
     for game in game_list:
         try:
+            #allstats = []
             if '.json' in game:
                 allstats.extend(parse_game_file(game))
             else:
@@ -423,7 +425,7 @@ def get_key(faction):
     key += str(faction.leech_pw[1]) #21
     #key += str(faction.rank_in_game) #
     key += faction.period #22-24
-    key += "".join(hex(i+1)[-1] for i in tuple(numpy.where(faction.favs <= 1)[0])) #25-
+    key += "".join(hex(i+1)[2] for i in tuple(numpy.where(faction.favs <= 1)[0])) #25-
     #print >> sys.stderr, faction.favs
     return key
 
