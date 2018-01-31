@@ -213,10 +213,13 @@ class FactionStat(object):
 
         # each building, each round
         self.builts = numpy.array((D, TP, TE, SA, SH), dtype=int)
+
         # each FAV, which round (if any)
         self.favs = self.parse_favors(events)
+
         # each TW, which round (if any)
         self.towns = self.parse_towns(events)
+
         # each round, which BON
         self.bonus = self.parse_bonus(events)
 
@@ -226,26 +229,32 @@ class FactionStat(object):
         for k, v in global_.items():
             if 'option-fire-and-ice-final-scoring' in k:
                 continue
+
             if 'option-' in k:
                 opt_key = k.replace('option-', '')
                 if opt_key.startswith('fire-and-ice-factions/variable_v'):
                     self.options['fire-and-ice-factions/variable'] = opt_key.replace('fire-and-ice-factions/variable_v', '')
                 else:
                     self.options[opt_key] = '1'
+
             if 'SCORE' in k:
                 sid = int(k.replace('SCORE', ''))
                 for r in range(1, 7):
                     if str(r) in v['round']:
                         self.score_tiles[str(r)] = sid
+
             # Greatest Distance
             if 'scoring-connected-distance' in k:
                 self.options['fire-and-ice-final-scoring'] = 1
+
             # Stringhold and Sanctuary
             if 'scoring-connected-sa-sh-distance' in k:
                 self.options['fire-and-ice-final-scoring'] = 2
+
             # Outposts
             if 'scoring-building-on-edge' in k:
                 self.options['fire-and-ice-final-scoring'] = 3
+
             # Settlements
             if 'scoring-connected-clusters' in k:
                 self.options['fire-and-ice-final-scoring'] = 4
@@ -258,15 +267,19 @@ class FactionStat(object):
                 players.append('anon-' + faction['faction'])
             else:
                 players.append(faction['player'])
+
             if faction['faction'] == 'yetis' or faction['faction'] == 'icemaidens':
                 if 'fire-and-ice-factions/ice' not in self.options:
                     self.options['fire-and-ice-factions/ice'] = 1
+
             if faction['faction'] == 'dragonlords' or faction['faction'] == 'acolytes':
                 if 'fire-and-ice-factions/volcano' not in self.options:
                     self.options['fire-and-ice-factions/volcano'] = 1
+
             if faction['faction'] == 'shapeshifters' or faction['faction'] == 'riverwalkers':
                 if 'fire-and-ice-factions/variable' not in self.options:
                     self.options['fire-and-ice-factions/variable'] = 1
+
         self.multifaction = 1 if len(list(set(players))) != len(players) else 0
 
 
@@ -291,6 +304,7 @@ def save(allstats):
 def parse_game_file(game_fn):
     if debug:
         print("game_id,faction,result_key,vp,margin,R1,R2,R3,R4,R5,R6")
+
     stats = []
     if game_fn.suffix == 'gz':
         openfunc = gzip.open
@@ -302,15 +316,18 @@ def parse_game_file(game_fn):
         for game in games:
             f = dict([(i['faction'], i['player']) for i in game['factions']])
             if 'player1' in f or 'player2' in f or 'player3' in f or 'player4' in f or 'player5' in f or 'player6' in f or 'player7' in f:
-                print("Skpping game with incomplete players:", game['game'])
+                print("Skipping game with incomplete players:", game['game'])
                 continue
             game['factions2'] = f
+
             if game['game'] in BLACKLIST:
                 print("Skipping irregular game:", game['game'])
                 continue
+
             if 'drop-faction' in game['events']['global']:
                 print("Skipping the game has dropped players:", game['game'])
                 continue
+
             factions = []
             for faction in f.keys():
                 if faction[:6] == 'nofact':
@@ -328,14 +345,18 @@ def parse_game_file(game_fn):
                             factions.append(s)
                 except KeyError as e:
                     print(game_fn, "failed! (", faction, "didn't have", str(e.args), ")")
+
             for faction1 in factions:
                 for faction2 in factions:
                     if faction1.score < faction2.score:
                         faction1.rank_in_game += 1
+
             if debug:
                 for s in factions:
                     print(game['game'] + ',' + s.name + ',' + get_key(s) + ',' + str(s.score) + ',' + str(s.margin) + ',' + str(s.score_tiles['1']) + ',' + str(s.score_tiles['2']) + ',' + str(s.score_tiles['3']) + ',' + str(s.score_tiles['4']) + ',' + str(s.score_tiles['5']) + ',' + str(s.score_tiles['6']))
+
             stats += factions
+
     fn = game_fn.stem
     stats_fn = 'docs/stats' + fn[2:4] + fn[5:7] + '.json'
     stats_fn = Path(stats_fn)
@@ -487,8 +508,10 @@ def get_statpool(allstats, statfuncs, key_func=get_key):
             continue
         key = key_func(faction)
         stats = statpool.setdefault(key, copy.deepcopy(statbase))
+
         for i, statfunc in enumerate(statfuncs):
             stats[i](statfunc(faction))
+
     return statpool
 
 
