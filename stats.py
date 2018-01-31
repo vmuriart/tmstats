@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """Terra Mystica Online stats summarizer"""
 
 import copy
@@ -14,9 +16,9 @@ import numpy
 
 from welford import Welford
 
-GAME_PATH = "games"
+GAME_PATH = 'games'
 
-GAME_FILENAME = "games.pickle.gz"
+GAME_FILENAME = 'games.pickle.gz'
 
 MAPDICT = {
     '126fe960806d587c78546b30f1a90853b1ada468': 'a',  # Original
@@ -33,56 +35,56 @@ MAPDICT = {
 }
 
 BLACKLIST = [
-    "nan0002",  # testing map b109f78907d2cbd5699ced16572be46043558e41
-    "gareth44",  # testing map 735b073fd7161268bb2796c1275abda92acd8b1a
-    "expm28",  # testing map 735b073fd7161268bb2796c1275abda92acd8b1a
-    "gareth45",  # testing map 30b6ded823e53670624981abdb2c5b8568a44091
-    "Bgg50",  # bridged more than 3
-    "DaveMattDouble2",  # bridged more than 3
-    "wayne",  # invalid score tiles
-    "JogaGREat5",  # CM double pass bug
-    "JogaGreat4",  # CM double pass bug
-    "PenisEnvy1",  # CM double pass bug
-    "JG9",  # CM double pass bug
-    "sky05",  # CM double pass bug
-    "JG10",  # CM double pass bug
-    "Terra4m",  # CM double pass bug
-    "Tools001",  # CM double pass bug
-    "DvMvRvB4",  # CM double pass bug
-    "marcelp24",  # CM double pass bug
-    "5",  # S1(SPD>>2) at Round5
-    "0627puyo",  # early PBF
-    "10",  # early PBF
-    "17",  # early PBF
-    "19",  # early PBF
-    "20",  # early PBF
-    "23",  # early PBF
-    "24",  # early PBF
-    "26",  # early PBF
-    "27",  # early PBF
-    # "5", #early PBF
-    "8",  # early PBF
-    "9",  # early PBF
-    "BlaGame11",  # early PBF
-    "BlaGame8",  # early PBF
-    "IBGPBF5",  # early PBF
-    "Noerrorpls",  # early PBF
-    "gamecepet",  # early PBF
-    "gareth2",  # early PBF
-    "nyobagame",  # early PBF
-    "pbc1",  # early PBF
-    "pbc2",  # early PBF
-    "pbc3",  # early PBF
-    "skelly1",  # early PBF
-    "skelly1a",  # early PBF
-    "skelly1b",  # early PBF
-    "skelly1c",  # early PBF
-    "skelly1d",  # early PBF
-    "skelly1e",  # early PBF
-    "skelly1f",  # early PBF
-    "skelly1",  # early PBF
-    "verandi1",  # early PBF
-    "verandi2",  # early PBF
+    'nan0002',  # testing map b109f78907d2cbd5699ced16572be46043558e41
+    'gareth44',  # testing map 735b073fd7161268bb2796c1275abda92acd8b1a
+    'expm28',  # testing map 735b073fd7161268bb2796c1275abda92acd8b1a
+    'gareth45',  # testing map 30b6ded823e53670624981abdb2c5b8568a44091
+    'Bgg50',  # bridged more than 3
+    'DaveMattDouble2',  # bridged more than 3
+    'wayne',  # invalid score tiles
+    'JogaGREat5',  # CM double pass bug
+    'JogaGreat4',  # CM double pass bug
+    'PenisEnvy1',  # CM double pass bug
+    'JG9',  # CM double pass bug
+    'sky05',  # CM double pass bug
+    'JG10',  # CM double pass bug
+    'Terra4m',  # CM double pass bug
+    'Tools001',  # CM double pass bug
+    'DvMvRvB4',  # CM double pass bug
+    'marcelp24',  # CM double pass bug
+    '5',  # S1(SPD>>2) at Round5
+    '0627puyo',  # early PBF
+    '10',  # early PBF
+    '17',  # early PBF
+    '19',  # early PBF
+    '20',  # early PBF
+    '23',  # early PBF
+    '24',  # early PBF
+    '26',  # early PBF
+    '27',  # early PBF
+    # '5', # early PBF
+    '8',  # early PBF
+    '9',  # early PBF
+    'BlaGame11',  # early PBF
+    'BlaGame8',  # early PBF
+    'IBGPBF5',  # early PBF
+    'Noerrorpls',  # early PBF
+    'gamecepet',  # early PBF
+    'gareth2',  # early PBF
+    'nyobagame',  # early PBF
+    'pbc1',  # early PBF
+    'pbc2',  # early PBF
+    'pbc3',  # early PBF
+    'skelly1',  # early PBF
+    'skelly1a',  # early PBF
+    'skelly1b',  # early PBF
+    'skelly1c',  # early PBF
+    'skelly1d',  # early PBF
+    'skelly1e',  # early PBF
+    'skelly1f',  # early PBF
+    'skelly1',  # early PBF
+    'verandi1',  # early PBF
+    'verandi2',  # early PBF
 ]
 
 FDICT = {
@@ -113,97 +115,97 @@ class FactionStat(object):
     """faction status in game result"""
 
     def __init__(self, game, name):
-        self.game_id = game["game"]
+        self.game_id = game['game']
         self.name = name
-        self.globals = game["events"]["global"]
-        fac_events = game["events"]["faction"][name]
-        self.user = game["factions2"][name]
-        self.score = fac_events["vp"]["round"]["all"] + 20
-        self.numplayers = game["player_count"]
-        avgscore = float(game["events"]["faction"]["all"]["vp"]["round"]["all"]) / self.numplayers + 20
+        self.globals = game['events']['global']
+        fac_events = game['events']['faction'][name]
+        self.user = game['factions2'][name]
+        self.score = fac_events['vp']['round']['all'] + 20
+        self.numplayers = game['player_count']
+        avgscore = float(game['events']['faction']['all']['vp']['round']['all']) / self.numplayers + 20
         self.margin = self.score - avgscore
-        self.map_type = MAPDICT[game["base_map"]]
-        self.all_bons = self.parse_picked_bonus(game["events"]["faction"]["all"])
+        self.map_type = MAPDICT[game['base_map']]
+        self.all_bons = self.parse_picked_bonus(game['events']['faction']['all'])
 
         self.parse_events(fac_events)
         self.orders = self.parse_order(fac_events)
         self.options = {}
         self.score_tiles = {}
-        self.parse_global(game["events"]["global"])
-        self.parse_players(game["factions"])
-        self.num_nofactions = game["player_count"] - game["events"]["global"]["faction-count"]["round"]["all"]
+        self.parse_global(game['events']['global'])
+        self.parse_players(game['factions'])
+        self.num_nofactions = game['player_count'] - game['events']['global']['faction-count']['round']['all']
         self.rank_in_game = 1
-        self.period = game["last_update"][2:4] + hex(int(game["last_update"][5:7]))[2]
-        # del self.events #don't need this anymore!
+        self.period = game['last_update'][2:4] + hex(int(game['last_update'][5:7]))[2]
+        # del self.events # don't need this anymore!
 
     def parse_event(self, events, event_id):
         if event_id not in events:
             return numpy.zeros(7)
-        r = defaultdict(int, events[event_id]["round"])
-        return numpy.array((r["0"], r["1"], r["2"], r["3"], r["4"], r["5"], r["6"]))
+        r = defaultdict(int, events[event_id]['round'])
+        return numpy.array((r['0'], r['1'], r['2'], r['3'], r['4'], r['5'], r['6']))
 
     def parse_favor(self, events, num):
-        key = "favor:FAV" + str(num)
+        key = 'favor:FAV' + str(num)
         if key not in events:
             return 9
-        r = list(events[key]["round"].keys())
-        r.remove("all")
+        r = list(events[key]['round'].keys())
+        r.remove('all')
         return int(r[0])
 
     def parse_favors(self, events):
         return numpy.array([self.parse_favor(events, i) for i in range(1, 13)])
 
     def parse_town(self, events, num):
-        key = "town:TW" + str(num)
+        key = 'town:TW' + str(num)
         if key not in events:
             return 0
-        r = list(events[key]["round"].keys())
-        r.remove("all")
+        r = list(events[key]['round'].keys())
+        r.remove('all')
         return int(r[0])
 
     def parse_towns(self, events):
         numpy.array([self.parse_town(events, i) for i in range(1, 9)])
 
     def parse_bonus(self, events):
-        return tuple(numpy.where(numpy.array([self.parse_event(events, "pass:BON" + str(i)) for i in range(1, 11)]).transpose() == 1)[1])
+        return tuple(numpy.where(numpy.array([self.parse_event(events, 'pass:BON' + str(i)) for i in range(1, 11)]).transpose() == 1)[1])
 
     def parse_picked_bonus(self, events):
         data = numpy.zeros(11)
         for i in range(1, 11):
-            data[i] = max(self.parse_event(events, "pass:BON" + str(i)))
+            data[i] = max(self.parse_event(events, 'pass:BON' + str(i)))
         return data
 
     def parse_allbonus(self, events, num):
-        key = "pass:BON" + str(num)
+        key = 'pass:BON' + str(num)
         if key not in events:
             return numpy.zeros(7)
-        r = defaultdict(int, events[key]["round"])
-        return numpy.array((r["0"], r["1"], r["2"], r["3"], r["4"], r["5"], r["6"]))
+        r = defaultdict(int, events[key]['round'])
+        return numpy.array((r['0'], r['1'], r['2'], r['3'], r['4'], r['5'], r['6']))
 
     def parse_order(self, events):
         result = {}
         for num in range(1, 8):
-            key = "order:" + str(num)
+            key = 'order:' + str(num)
             if key not in events:
                 continue
-            r = list(events[key]["round"].keys())
-            r.remove("all")
+            r = list(events[key]['round'].keys())
+            r.remove('all')
             for k in r:
                 result[str(k)] = num
         return result
 
     def parse_leech(self, events):
         pw = []
-        for k in self.parse_event(events, "leech:pw"):
+        for k in self.parse_event(events, 'leech:pw'):
             pw.append(min(4, int(k / 4)))
         return pw
 
     def parse_events(self, events):
-        D_evt = self.parse_event(events, "build:D")
-        TP_evt = self.parse_event(events, "upgrade:TP")
-        TE_evt = self.parse_event(events, "upgrade:TE")
-        SA_evt = self.parse_event(events, "upgrade:SA")
-        SH_evt = self.parse_event(events, "upgrade:SH")
+        D_evt = self.parse_event(events, 'build:D')
+        TP_evt = self.parse_event(events, 'upgrade:TP')
+        TE_evt = self.parse_event(events, 'upgrade:TE')
+        SA_evt = self.parse_event(events, 'upgrade:SA')
+        SH_evt = self.parse_event(events, 'upgrade:SH')
 
         # upgrade path...
         D = numpy.cumsum(D_evt - TP_evt)
@@ -225,49 +227,49 @@ class FactionStat(object):
 
     def parse_global(self, global_):
         for k, v in global_.items():
-            if "option-fire-and-ice-final-scoring" in k:
+            if 'option-fire-and-ice-final-scoring' in k:
                 continue
-            if "option-" in k:
-                opt_key = k.replace("option-", "")
-                if opt_key.startswith("fire-and-ice-factions/variable_v"):
-                    self.options["fire-and-ice-factions/variable"] = opt_key.replace("fire-and-ice-factions/variable_v", "")
+            if 'option-' in k:
+                opt_key = k.replace('option-', '')
+                if opt_key.startswith('fire-and-ice-factions/variable_v'):
+                    self.options['fire-and-ice-factions/variable'] = opt_key.replace('fire-and-ice-factions/variable_v', '')
                 else:
                     self.options[opt_key] = '1'
-            if "SCORE" in k:
-                sid = int(k.replace("SCORE", ""))
+            if 'SCORE' in k:
+                sid = int(k.replace('SCORE', ''))
                 for r in range(1, 7):
-                    if str(r) in v["round"]:
+                    if str(r) in v['round']:
                         self.score_tiles[str(r)] = sid
             # Greatest Distance
-            if "scoring-connected-distance" in k:
-                self.options["fire-and-ice-final-scoring"] = 1
+            if 'scoring-connected-distance' in k:
+                self.options['fire-and-ice-final-scoring'] = 1
             # Stringhold and Sanctuary
-            if "scoring-connected-sa-sh-distance" in k:
-                self.options["fire-and-ice-final-scoring"] = 2
+            if 'scoring-connected-sa-sh-distance' in k:
+                self.options['fire-and-ice-final-scoring'] = 2
             # Outposts
-            if "scoring-building-on-edge" in k:
-                self.options["fire-and-ice-final-scoring"] = 3
+            if 'scoring-building-on-edge' in k:
+                self.options['fire-and-ice-final-scoring'] = 3
             # Settlements
-            if "scoring-connected-clusters" in k:
-                self.options["fire-and-ice-final-scoring"] = 4
-        self.dropped_players = global_["drop-faction"]["all"] if "drop-faction" in global_ and "all" in global_["drop-faction"] else 0
+            if 'scoring-connected-clusters' in k:
+                self.options['fire-and-ice-final-scoring'] = 4
+        self.dropped_players = global_['drop-faction']['all'] if 'drop-faction' in global_ and 'all' in global_['drop-faction'] else 0
 
     def parse_players(self, factions):
         players = []
         for faction in factions:
-            if faction[u"player"] == None:
-                players.append(u"anon-" + faction[u"faction"])
+            if faction[u'player'] == None:
+                players.append(u'anon-' + faction[u'faction'])
             else:
-                players.append(faction[u"player"])
-            if faction[u"faction"] == "yetis" or faction[u"faction"] == "icemaidens":
-                if "fire-and-ice-factions/ice" not in self.options:
-                    self.options["fire-and-ice-factions/ice"] = 1
-            if faction[u"faction"] == "dragonlords" or faction[u"faction"] == "acolytes":
-                if "fire-and-ice-factions/volcano" not in self.options:
-                    self.options["fire-and-ice-factions/volcano"] = 1
-            if faction[u"faction"] == "shapeshifters" or faction[u"faction"] == "riverwalkers":
-                if "fire-and-ice-factions/variable" not in self.options:
-                    self.options["fire-and-ice-factions/variable"] = 1
+                players.append(faction[u'player'])
+            if faction[u'faction'] == 'yetis' or faction[u'faction'] == 'icemaidens':
+                if 'fire-and-ice-factions/ice' not in self.options:
+                    self.options['fire-and-ice-factions/ice'] = 1
+            if faction[u'faction'] == 'dragonlords' or faction[u'faction'] == 'acolytes':
+                if 'fire-and-ice-factions/volcano' not in self.options:
+                    self.options['fire-and-ice-factions/volcano'] = 1
+            if faction[u'faction'] == 'shapeshifters' or faction[u'faction'] == 'riverwalkers':
+                if 'fire-and-ice-factions/variable' not in self.options:
+                    self.options['fire-and-ice-factions/variable'] = 1
         self.multifaction = 1 if len(list(set(players))) != len(players) else 0
         # if self.multifaction == 1:
         #    print(players)
@@ -288,7 +290,7 @@ def load():
 def save(allstats):
     print("saving... ", )
     sys.stdout.flush()
-    with gzip.open(GAME_FILENAME, "w+") as game_file:
+    with gzip.open(GAME_FILENAME, 'w+') as game_file:
         pickle.dump(allstats, game_file)
     print("done!")
 
@@ -297,7 +299,7 @@ def parse_game_file(game_fn):
     if debug:
         print("game_id,faction,result_key,vp,margin,R1,R2,R3,R4,R5,R6")
     stats = []
-    if game_fn[-2:] == "gz":
+    if game_fn[-2:] == 'gz':
         openfunc = gzip.open
     else:
         openfunc = open
@@ -305,20 +307,20 @@ def parse_game_file(game_fn):
         print("parsing " + game_fn + "...")
         games = json.load(game_file)
         for game in games:
-            f = dict([(i["faction"], i["player"]) for i in game["factions"]])
-            if "player1" in f or "player2" in f or "player3" in f or "player4" in f or "player5" in f or "player6" in f or "player7" in f:
-                print("Skpping game with incomplete players: " + game["game"])
+            f = dict([(i['faction'], i['player']) for i in game['factions']])
+            if 'player1' in f or 'player2' in f or 'player3' in f or 'player4' in f or 'player5' in f or 'player6' in f or 'player7' in f:
+                print("Skpping game with incomplete players: " + game['game'])
                 continue
-            game["factions2"] = f
-            if game["game"] in BLACKLIST:
-                print("Skipping irregular game: " + game["game"])
+            game['factions2'] = f
+            if game['game'] in BLACKLIST:
+                print("Skipping irregular game: " + game['game'])
                 continue
-            if "drop-faction" in game["events"]["global"]:
-                print("Skipping the game has dropped players: " + game["game"])
+            if 'drop-faction' in game['events']['global']:
+                print("Skipping the game has dropped players: " + game['game'])
                 continue
             factions = []
             for faction in f.keys():
-                if faction[:6] == "nofact":
+                if faction[:6] == 'nofact':
                     continue
                 try:
                     s = FactionStat(game, faction)
@@ -341,9 +343,9 @@ def parse_game_file(game_fn):
                         faction1.rank_in_game += 1
             if debug:
                 for s in factions:
-                    print(game["game"] + "," + s.name + "," + get_key(s) + "," + str(s.score) + "," + str(s.margin) + "," + str(s.score_tiles["1"]) + "," + str(s.score_tiles["2"]) + "," + str(s.score_tiles["3"]) + "," + str(s.score_tiles["4"]) + "," + str(s.score_tiles["5"]) + "," + str(s.score_tiles["6"]))
+                    print(game['game'] + ',' + s.name + ',' + get_key(s) + ',' + str(s.score) + ',' + str(s.margin) + ',' + str(s.score_tiles['1']) + ',' + str(s.score_tiles['2']) + ',' + str(s.score_tiles['3']) + ',' + str(s.score_tiles['4']) + ',' + str(s.score_tiles['5']) + ',' + str(s.score_tiles['6']))
             stats += factions
-    stats_fn = "docs/stats" + game_fn[8:10] + game_fn[11:13] + ".json"
+    stats_fn = 'docs/stats' + game_fn[8:10] + game_fn[11:13] + '.json'
     if not os.path.isfile(stats_fn):
         save_stats(compute_stats(stats, get_key), stats_fn)
     return stats
@@ -376,9 +378,9 @@ def parse_games(game_list=None):
 def get_rating(player, faction):
     if player not in ratings:
         return 0
-    if "score" not in ratings[player]:
+    if 'score' not in ratings[player]:
         return 0
-    score = ratings[player]["score"]
+    score = ratings[player]['score']
     if score < 1000:
         return 1
     elif score < 1100:
@@ -412,28 +414,28 @@ def get_key(faction):
     # option-variable-turn-order:
 
     # print(faction.score_tiles)
-    key = ""
+    key = ''
     key += str(faction.map_type)  # 0
-    key += "0" if "errata-cultist-power" not in faction.options else "1"  # 1
-    key += "0" if "mini-expansion-1" not in faction.options else "1"  # 2
-    key += "0" if "shipping-bonus" not in faction.options else "1"  # 3
-    key += "0" if "fire-and-ice-final-scoring" not in faction.options else str(faction.options["fire-and-ice-final-scoring"])  # 4
-    key += "0" if "fire-and-ice-factions/ice" not in faction.options else "1"  # 5
-    key += "0" if "fire-and-ice-factions/volcano" not in faction.options else "1"  # 6
-    key += "0" if "fire-and-ice-factions/variable" not in faction.options else str(faction.options["fire-and-ice-factions/variable"])  # 7
-    key += "0" if "variable-turn-order" not in faction.options else "1"  # 8
-    key += "0" if "temple-scoring-tile" not in faction.options else "1"  # 9
-    key += str(faction.score_tiles["1"])  # 10
-    key += str(faction.orders["1"])  # 11
+    key += '0' if 'errata-cultist-power' not in faction.options else '1'  # 1
+    key += '0' if 'mini-expansion-1' not in faction.options else '1'  # 2
+    key += '0' if 'shipping-bonus' not in faction.options else '1'  # 3
+    key += '0' if 'fire-and-ice-final-scoring' not in faction.options else str(faction.options['fire-and-ice-final-scoring'])  # 4
+    key += '0' if 'fire-and-ice-factions/ice' not in faction.options else '1'  # 5
+    key += '0' if 'fire-and-ice-factions/volcano' not in faction.options else '1'  # 6
+    key += '0' if 'fire-and-ice-factions/variable' not in faction.options else str(faction.options['fire-and-ice-factions/variable'])  # 7
+    key += '0' if 'variable-turn-order' not in faction.options else '1'  # 8
+    key += '0' if 'temple-scoring-tile' not in faction.options else '1'  # 9
+    key += str(faction.score_tiles['1'])  # 10
+    key += str(faction.orders['1'])  # 11
     key += str(FDICT[faction.name])  # 12
     key += str(faction.numplayers)  # 13
     key += str(get_rating(faction.user, faction.name))  # 14
-    key += "".join(str(i) for i in tuple(faction.builts[:, 1]))  # 15-19
+    key += ''.join(str(i) for i in tuple(faction.builts[:, 1]))  # 15-19
     key += str(faction.bonus[0])  # 20
     key += str(faction.leech_pw[1])  # 21
     # key += str(faction.rank_in_game) #
     key += faction.period  # 22-24
-    key += "".join(hex(i + 1)[2] for i in tuple(numpy.where(faction.favs <= 1)[0]))  # 25-
+    key += ''.join(hex(i + 1)[2] for i in tuple(numpy.where(faction.favs <= 1)[0]))  # 25-
     # print(faction.favs)
     return key
 
@@ -461,28 +463,28 @@ def get_key2(faction):
     # option-variable-turn-order:
 
     # print(faction.score_tiles)
-    key = ""
+    key = ''
     key += str(faction.map_type)  # 0
-    key += "0" if "errata-cultist-power" not in faction.options else "1"  # 1
-    key += "0" if "mini-expansion-1" not in faction.options else "1"  # 2
-    key += "0" if "shipping-bonus" not in faction.options else "1"  # 3
-    key += "0" if "fire-and-ice-final-scoring" not in faction.options else str(faction.options["fire-and-ice-final-scoring"])  # 4
-    key += "0" if "fire-and-ice-factions/ice" not in faction.options else "1"  # 5
-    key += "0" if "fire-and-ice-factions/volcano" not in faction.options else "1"  # 6
-    key += "0" if "fire-and-ice-factions/variable" not in faction.options else str(faction.options["fire-and-ice-factions/variable"])  # 7
-    key += "0" if "variable-turn-order" not in faction.options else "1"  # 8
-    key += "0" if "temple-scoring-tile" not in faction.options else "1"  # 9
-    key += str(faction.score_tiles["1"])  # 10
-    key += str(faction.score_tiles["2"])  # 11
-    key += str(faction.score_tiles["3"])  # 12
-    key += str(faction.score_tiles["4"])  # 13
-    key += str(faction.score_tiles["5"])  # 14
-    key += str(faction.score_tiles["6"])  # 15
-    key += str(faction.orders["1"])  # 16
+    key += '0' if 'errata-cultist-power' not in faction.options else '1'  # 1
+    key += '0' if 'mini-expansion-1' not in faction.options else '1'  # 2
+    key += '0' if 'shipping-bonus' not in faction.options else '1'  # 3
+    key += '0' if 'fire-and-ice-final-scoring' not in faction.options else str(faction.options['fire-and-ice-final-scoring'])  # 4
+    key += '0' if 'fire-and-ice-factions/ice' not in faction.options else '1'  # 5
+    key += '0' if 'fire-and-ice-factions/volcano' not in faction.options else '1'  # 6
+    key += '0' if 'fire-and-ice-factions/variable' not in faction.options else str(faction.options['fire-and-ice-factions/variable'])  # 7
+    key += '0' if 'variable-turn-order' not in faction.options else '1'  # 8
+    key += '0' if 'temple-scoring-tile' not in faction.options else '1'  # 9
+    key += str(faction.score_tiles['1'])  # 10
+    key += str(faction.score_tiles['2'])  # 11
+    key += str(faction.score_tiles['3'])  # 12
+    key += str(faction.score_tiles['4'])  # 13
+    key += str(faction.score_tiles['5'])  # 14
+    key += str(faction.score_tiles['6'])  # 15
+    key += str(faction.orders['1'])  # 16
     key += str(FDICT[faction.name])  # 17
     key += str(faction.numplayers)  # 18
     key += str(get_rating(faction.user, faction.name))  # 19
-    key += "".join("%d" % faction.all_bons[i] for i in range(1, 11))  # 20-29
+    key += ''.join('%d' % faction.all_bons[i] for i in range(1, 11))  # 20-29
     key += faction.period  # 30-32
     return key
 
@@ -491,7 +493,7 @@ def get_statpool(allstats, statfuncs, key_func=get_key):
     statpool = {}
     statbase = [Welford() for x in statfuncs]
     for faction in allstats:
-        if "1" not in faction.score_tiles:
+        if '1' not in faction.score_tiles:
             print("invalid score tiles: " + faction.game_id)
             continue
         key = key_func(faction)
@@ -512,7 +514,7 @@ def compute_stats(allstats, key_func):
     )
 
 
-def save_stats(statpool, filename="docs/stats.json"):
+def save_stats(statpool, filename='docs/stats.json'):
     def jsonify(x):
         """Handles welford stats"""
         if x.n == 1:
@@ -520,18 +522,18 @@ def save_stats(statpool, filename="docs/stats.json"):
         else:
             return x.n, x.M1, x.M2, x.M3, x.M4
 
-    with open(filename, "w+") as f:
+    with open(filename, 'w+') as f:
         json.dump(statpool, f, default=jsonify, indent=2)
 
 
-def save_raw(statpool, filename="stats.csv"):
-    with open(filename, "w+") as f:
+def save_raw(statpool, filename='stats.csv'):
+    with open(filename, 'w+') as f:
         writer = csv.writer(f, lineterminator='\n')
         writer.writerow(list)
 
 
-if __name__ == "__main__":
-    debug = False  # sys.argv[0] == "-d" # False
+if __name__ == '__main__':
+    debug = False  # sys.argv[0] == '-d' # False
 
     try:
         with open('ratings.json') as f:
@@ -548,8 +550,8 @@ if __name__ == "__main__":
         allstats = parse_games()
         # save(allstats)
     print("Computing...")
-    save_stats(compute_stats(allstats, get_key), "docs/stats.json")
+    save_stats(compute_stats(allstats, get_key), 'docs/stats.json')
 
-    save_stats(compute_stats(allstats, get_key2), "docs/chooser.json")
+    save_stats(compute_stats(allstats, get_key2), 'docs/chooser.json')
     print("Finished")
     # save_raw(statpool)

@@ -1,901 +1,934 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset='utf-8'>
-        <title>TM Stats</title>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-        <script src='javascripts/welford.js'></script>
-        <script>
-            $.fn.exists = function () {
-                return this.length !== 0;
-            };
+<head>
+    <meta charset='utf-8'>
+    <title>TM Stats</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <script src='javascripts/welford.js'></script>
+    <script>
+        $.fn.exists = function () {
+            return this.length !== 0;
+        };
 
-            var statpool = {};
-            $.getJSON( 'stats.json', function( data ){
-                $.each( data, function( key, stats ) {
-                    statpool[key] = stats.map( function( stat ){ return new Welford( stat ); } );
+        var statpool = {};
+        $.getJSON('stats.json', function (data) {
+            $.each(data, function (key, stats) {
+                statpool[key] = stats.map(function (stat) {
+                    return new Welford(stat);
                 });
+            });
 
-                var hash = window.location.hash;
-                if( hash )
-                {
-                    var stats = hash.substr(1).split(",");
-                    for( var i = 0; i < stats.length; i++ )
-                    {
-                        if( stats[i] )
-                        get_stats_by_key( stats[i] );
-                    }
+            var hash = window.location.hash;
+            if (hash) {
+                var stats = hash.substr(1).split(",");
+                for (var i = 0; i < stats.length; i++) {
+                    if (stats[i])
+                        get_stats_by_key(stats[i]);
+                }
+            }
+        });
+
+        var factions = [
+            'Acolytes',
+            'Alchemists',
+            'Auren',
+            'ChaosMagicians',
+            'Cultists',
+            'Darklings',
+            'DragonLords',
+            'Dwarves',
+            'Engineers',
+            'Fakirs',
+            'Giants',
+            'Halflings',
+            'Icemaidens',
+            'Mermaids',
+            'Nomads',
+            'RiverWalkers',
+            'ShapeShifters',
+            'Swarmlings',
+            'Witches',
+            'Yetis'];
+
+        function key_to_faction(key) {
+            if (key === '.') return "All";
+            var facts = [];
+            for (var i = 0; i < key.length; i++)
+                facts.push(factions[key.charCodeAt(i) - 97]);
+            return facts.join(" ");
+        }
+
+        function key_to_rating(key) {
+            if (key === '.') return "All";
+            if (key === '0') return "Bad";
+            if (key === '1') return "Poor";
+            if (key === '2') return "Good";
+            if (key === '3') return "Best";
+            return key.split("").map(function (x) {
+                return parseInt(x) + 1;
+            }).join(",");
+        }
+
+        function building_key(type) {
+            var item = $("#" + type);
+            var strict = $("#" + type + "_strict");
+            if (strict.prop('checked')) return item.val();
+            if (item.val() === "0") return ".";
+            return "[" + item.val() + "-" + item.attr('max') + "]";
+        }
+
+        function get_regex_chunks(regex_str) {
+            var chunks = [];
+            var gchunk;
+            var ing = false;
+            for (var i = 0; i < regex_str.length; i++) {
+                if (regex_str[i] === '*') {
+                    chunks.pop();
+                }
+                else if (regex_str[i] === '[') {
+                    gchunk = "";
+                    ing = true;
+                }
+                else if (regex_str[i] === ']') {
+                    chunks.push(gchunk);
+                    ing = false;
+                }
+                else if (regex_str[i] === '^') {
+                    //ignore
+                    ing = false;
+                }
+                else if (regex_str[i] === '$') {
+                    //ignore
+                    ing = false;
+                }
+                else {
+                    if (ing)
+                        gchunk += regex_str[i];
+                    else
+                        chunks.push(regex_str[i]);
+                }
+            }
+            return chunks;
+        }
+
+        function get_stats_by_key(key_pattern) {
+            var re = new RegExp("^" + key_pattern);
+            var ret;
+            $.each(statpool, function (key, stats) {
+                if (re.test(key)) {
+                    if (ret === undefined)
+                        ret = stats;
+                    else
+                        ret = stats.map(function (s, i) {
+                            return s.combine(ret[i]);
+                        });
                 }
             });
 
-            var factions = [
-                'Acolytes',
-                'Alchemists',
-                'Auren',
-                'ChaosMagicians',
-                'Cultists',
-                'Darklings',
-                'DragonLords',
-                'Dwarves',
-                'Engineers',
-                'Fakirs',
-                'Giants',
-                'Halflings',
-                'Icemaidens',
-                'Mermaids',
-                'Nomads',
-                'RiverWalkers',
-                'ShapeShifters',
-                'Swarmlings',
-                'Witches',
-                'Yetis'];
-            function key_to_faction( key )
-            {
-                if( key === '.' ) return "All";
-                var facts = [];
-                for( var i =0; i < key.length; i++)
-                    facts.push( factions[key.charCodeAt(i) - 97] );
-                return facts.join(" ");
+            if (ret === undefined) {
+                $("#error").show();
             }
+            else {
+                $("#error").hide();
 
-            function key_to_rating( key )
-            {
-                if( key === '.' ) return "All";
-                if( key === '0' ) return "Bad";
-                if( key === '1' ) return "Poor";
-                if( key === '2' ) return "Good";
-                if( key === '3' ) return "Best";
-                return key.split("").map(function(x){return parseInt(x)+1;}).join(",");
-            }
-            
-            function building_key( type )
-            {
-                var item = $("#"+type);
-                var strict = $("#"+type+"_strict");
-                if( strict.prop('checked') ) return item.val();
-                if( item.val() === "0" ) return ".";
-                return"[" + item.val() +"-"+item.attr('max')+"]";
-            }
+                var chunks = get_regex_chunks(key_pattern);
 
-            function get_regex_chunks( regex_str )
-            {
-                var chunks = [];
-                var gchunk;
-                var ing = false;
-                for( var i = 0; i < regex_str.length; i++ )
-                {
-                    if( regex_str[i] === '*' )
-                    {
-                        chunks.pop();
+                var map_type = 'multi';
+                if (chunks[0] === 'a') map_type = 'Original';
+                else if (chunks[0] === 'b') map_type = 'F&I Side 1';
+                else if (chunks[0] === 'c') map_type = 'F&I Side 2';
+                else if (chunks[0] === 'h') map_type = 'Loon Lakes v1.5';
+                else if (chunks[0] === '.') map_type = 'any';
+
+                var cultists_errata = 'both';
+                if (chunks[1] === '0') cultists_errata = 'w/o eratta';
+                else if (chunks[1] === '1') cultists_errata = 'with eratta';
+                else if (chunks[1] === '01') cultists_errata = 'both';
+
+                var option_desc = '';
+                if (chunks[2] === '0') option_desc += 'TW:off<br>';
+                if (chunks[2] === '1') option_desc += 'TW:on<br>';
+
+                if (chunks[3] === '0') option_desc += 'BON10:off<br>';
+                if (chunks[3] === '1') option_desc += 'BON10:on<br>';
+
+                if (chunks[4] === '0') option_desc += 'FinalScoring:off<br>';
+                if (chunks[4] === '1') option_desc += 'FinalScoring:on<br>';
+
+                if (chunks[5] === '0') option_desc += 'Ice:off<br>';
+                if (chunks[5] === '1') option_desc += 'Ice:on<br>';
+
+                if (chunks[6] === '0') option_desc += 'Volcano:off<br>';
+                if (chunks[6] === '1') option_desc += 'Volcano:on<br>';
+
+                if (chunks[7] === '0') option_desc += 'Variable:off<br>';
+                if (chunks[7] === '1') option_desc += 'Variable:v1<br>';
+                if (chunks[7] === '2') option_desc += 'Variable:v2<br>';
+                if (chunks[7] === '3') option_desc += 'Variable:v3<br>';
+                if (chunks[7] === '4') option_desc += 'Variable:v4<br>';
+                if (chunks[7] === '5') option_desc += 'Variable:v5<br>';
+
+                if (chunks[8] === '0') option_desc += 'PassingOrder:off<br>';
+                if (chunks[8] === '1') option_desc += 'PassingOrder:on<br>';
+
+                if (chunks[9] === '0') option_desc += 'SCORE9:off<br>';
+                if (chunks[9] === '1') option_desc += 'SCORE9:on<br>';
+
+                var scoring_r1 = 'any';
+                if (chunks[10] !== '.') scoring_r1 = chunks[10];
+
+                var order_r1 = 'any';
+                if (chunks[11] !== '.') order_r1 = chunks[11];
+
+                var fact = key_to_faction(chunks[12]);
+
+                var pcnt = chunks[13];
+                if (pcnt === '.') pcnt = "1-7P";
+                else if (pcnt.length === 1) {
+                    pcnt += "P";
+                }
+                else {
+                    //multi-select
+                    if (pcnt === "234") pcnt = "2-4P";
+                    else if (pcnt === "2345") pcnt = "2-5P";
+                    else if (pcnt === "23456") pcnt = "2-6P";
+                    else if (pcnt === "234567") pcnt = "2-7P";
+                    else if (pcnt === "345") pcnt = "3-5P";
+                    else if (pcnt === "3456") pcnt = "3-6P";
+                    else if (pcnt === "34567") pcnt = "3-7P";
+                    else if (pcnt === "456") pcnt = "4-6P";
+                    else if (pcnt === "4567") pcnt = "4-7P";
+                    else if (pcnt === "567") pcnt = "5-7P";
+                    else if (pcnt === "123") pcnt = "1-3P";
+                    else if (pcnt === "1234") pcnt = "1-4P";
+                    else if (pcnt === "12345") pcnt = "1-5P";
+                    else if (pcnt === "123456") pcnt = "1-6P";
+                    else if (pcnt === "1234567") pcnt = "1-7P";
+                    else pcnt = pcnt.split("").join(",") + "P";
+
+                }
+
+                var rate = key_to_rating(chunks[14]);
+
+                function building_str(chunk, build) {
+                    var item = $("#" + build);
+                    var max = parseInt(item.attr('max'));
+                    if (chunk === '.') return "";
+                    if (chunk.length === 1) {
+                        if (chunk === '1')
+                            return build;
+                        return chunk + build;
                     }
-                    else if( regex_str[i] === '[' )
-                    {
-                        gchunk = "";
-                        ing = true;
+                    if (chunk === max + "-" + max) {
+                        return max + build;
                     }
-                    else if( regex_str[i] === ']' )
-                    {
-                        chunks.push( gchunk );
-                        ing = false;
-                    }
-                    else if( regex_str[i] === '^' )
-                    {
-                        //ignore
-                        ing = false;
-                    }
-                    else if( regex_str[i] === '$' )
-                    {
-                        //ignore
-                        ing = false;
-                    }
-                    else
-                    {
-                        if( ing )
-                            gchunk += regex_str[i];
-                        else
-                            chunks.push( regex_str[i] );
+                    return chunk + build;
+                }
+
+                var BUILD =
+                    building_str(chunks[15], "D") +
+                    building_str(chunks[16], "TP") +
+                    building_str(chunks[17], "TE") +
+                    building_str(chunks[18], "SA") +
+                    building_str(chunks[19], "SH");
+                var BON = chunks[20];
+                if (BON === "." || BON === undefined) BON = "";
+
+                var leech1 = chunks[21];
+                if (leech1 === '0') leech1 = '0-3';
+                if (leech1 === '1') leech1 = '4-7';
+                if (leech1 === '2') leech1 = '8-11';
+                if (leech1 === '3') leech1 = '12-15';
+                if (leech1 === '4') leech1 = '16+';
+                if (leech1 === '01') leech1 = '0-7';
+                if (leech1 === '012') leech1 = '0-11';
+                if (leech1 === '0123') leech1 = '0-15';
+                if (leech1 === '01234') leech1 = 'any';
+                if (leech1 === '.') leech1 = 'any';
+                if (leech1 === '12') leech1 = '4-11';
+                if (leech1 === '123') leech1 = '4-15';
+                if (leech1 === '1234') leech1 = '4+';
+                if (leech1 === '23') leech1 = '8-15';
+                if (leech1 === '234') leech1 = '8+';
+                if (leech1 === '34') leech1 = '12+';
+
+                //var position = chunks[22];
+                //if (position === '.') position = "any";
+
+                var period = (chunks[22] || '.') + (chunks[23] || '.') + (chunks[24] || '.');
+                if (period === "...") {
+                    period = "any";
+                } else {
+                    period = "20" + chunks[22] + chunks[23] + " ";
+                    switch (chunks[24]) {
+                        case '1':
+                            period += "Jan";
+                            break;
+                        case '2':
+                            period += "Feb";
+                            break;
+                        case '3':
+                            period += "Mar";
+                            break;
+                        case '4':
+                            period += "Apr";
+                            break;
+                        case '5':
+                            period += "May";
+                            break;
+                        case '6':
+                            period += "Jun";
+                            break;
+                        case '7':
+                            period += "Jul";
+                            break;
+                        case '8':
+                            period += "Aug";
+                            break;
+                        case '9':
+                            period += "Sep";
+                            break;
+                        case 'a':
+                            period += "Oct";
+                            break;
+                        case 'b':
+                            period += "Nov";
+                            break;
+                        case 'c':
+                            period += "Dec";
+                            break;
                     }
                 }
-                return chunks;
+
+
+                var FAV = chunks[25];
+                if (FAV === "." || FAV === undefined) FAV = "";
+
+                var strBON = [];
+                for (var i = 0; i < BON.length; i++)
+                    strBON.push(ALLBON[BON[i]]);
+                BON = strBON.join("<br>");
+
+                var strFAV = [];
+                for (var i = 0; i < FAV.length; i++)
+                    strFAV.push(ALLFAV[FAV[i]]);
+                FAV = strFAV.join("<br>");
+
+                var desc = [];
+                if (BUILD) desc.push(BUILD);
+                if (BON) desc.push(BON);
+                if (FAV) desc.push(FAV);
+                desc = desc.join("<br>");
+
+                var tooltip = BON + " " + FAV;
+
+                var table = $("#stats_tab");
+                if (!table.exists()) {
+                    table = $("<table>", {
+                        id: "stats_tab",
+                        class: "stat-cont",
+                        style: "font-family: 'Courier New', monospace;border-collapse:collapse"
+                    });
+                    $("#stats").append(table);
+                }
+                var section = $("#" + fact);
+                if (!section.exists()) {
+                    section = $("<tbody>", {
+                        id: fact,
+                        class: "stat-cont",
+                        style: "font-family: 'Courier New', monospace;border-collapse:collapse; margin-top: 20px;"
+                    });
+                    var header = $("<tr>", {style: "border-bottom:1px solid gray;"});
+                    header.append("<th style='text-align:left; font-family:serif;'>" + fact);
+                    //header.append( "<th style='border-left:1px solid gray;'>Position" );
+                    header.append("<th style='border-left:1px solid gray;'>Year-Month");
+                    header.append("<th style='border-left:1px solid gray;width:4em;'>Map.");
+                    header.append("<th style='border-left:1px solid gray;'>Cultists<br>errata");
+                    header.append("<th style='border-left:1px solid gray;width:8em;'>Options.");
+                    header.append("<th style='border-left:1px solid gray;'>Rat.");
+                    header.append("<th style='border-left:1px solid gray;'>R1:Score");
+                    header.append("<th style='border-left:1px solid gray;'>R1:Order");
+                    header.append("<th style='border-left:1px solid gray;'>R1:leechPw");
+                    header.append("<th style='border-left:1px solid gray;width:6em;'>Desc.");
+                    header.append("<th colspan=3 style='border-left:1px solid gray;width:10em;'>VP");
+                    header.append("<th colspan=3 style='border-left:1px solid gray;width:11em;'>Margin");
+                    header.append("<th style='border-left:1px solid gray;width:6em;'>Count");
+                    section.append(header);
+                    $("#stats_tab").append(section);
+                }
+
+                var row = $("<tr>", {id: key_pattern, class: 'stat'});
+                row.append("<td style=''>" + pcnt);
+                //row.append( "<td style='border-left:1px solid gray;'>"+position );
+                row.append("<td style='border-left:1px solid gray;'>" + period);
+                row.append("<td style='border-left:1px solid gray;'>" + map_type);
+                row.append("<td style='border-left:1px solid gray;'>" + cultists_errata);
+                row.append("<td style='border-left:1px solid gray;'>" + option_desc);
+                row.append("<td style='border-left:1px solid gray;'>" + rate);
+                row.append("<td style='border-left:1px solid gray;'>" + scoring_r1);
+                row.append("<td style='border-left:1px solid gray;'>" + order_r1);
+                row.append("<td style='border-left:1px solid gray;'>" + leech1);
+                row.append("<td class='data' style='text-align:left'>" + desc + "<span class='tooltip'>" + tooltip + "</span>");
+
+                row.append("<td class='data'>" + ret[0].mean().toFixed(2) + "<span class='tooltip'>Standard Deviation:" + ret[0].std().toFixed(2) + "</span>");
+                row.append("<td>±");
+                row.append("<td>" + ret[0].meanstd().toFixed(2));
+
+                row.append("<td class='data'>" + ret[1].mean().toFixed(2) + "<span class='tooltip'>Standard Deviation:" + ret[1].std().toFixed(2) + "</span>");
+                row.append("<td>±");
+                row.append("<td>" + ret[1].meanstd().toFixed(2));
+
+                row.append("<td style='border-left:1px solid gray;text-align:right'>" + ret[1].n);
+
+                section.append(row);
+
+                table.height(section.height() + 2);
             }
-            
-            function get_stats_by_key( key_pattern )
-            {
-                var re = new RegExp( "^"+key_pattern );
-                var ret;
-                $.each( statpool, function( key, stats ) {
-                    if( re.test( key ) )
-                    {
-                        if( ret === undefined )
-                            ret = stats;
-                        else
-                            ret = stats.map( function( s,i ){ return s.combine( ret[i] ); } );
-                    }
+        }
+
+        function get_multi_select_key(name, opt) {
+            var item = $("#" + name);
+            var value = item.val();
+            var regpat = "";
+            if (value === null) {
+                if (opt === undefined) regpat = "."; //wildcard
+            }
+            else if (value instanceof Array) {
+                if (value.length === 1)
+                    regpat = value[0];
+                else if (value.length === item.children().length)
+                    regpat = ".";
+                else
+                    regpat = "[" + value.join("") + "]";
+            }
+            else regpat = value;
+            return regpat;
+        }
+
+        function get_key_from_selection() {
+            var fctpat = get_multi_select_key("faction");
+            var pctpat = get_multi_select_key("pcount");
+            var ratpat = get_multi_select_key("rating");
+            var BONpat = get_multi_select_key("BON");
+            var FAVpat = get_multi_select_key("FAV", true);
+
+            var map_type = get_multi_select_key("map");
+            var cultist_errata = get_multi_select_key("cultists");
+            var mini_expansion1 = get_multi_select_key("useTW");
+            var shipping_bonus = get_multi_select_key("useBON10");
+            var additional_scoring = get_multi_select_key("additional");
+            var ice_factions = get_multi_select_key("ice");
+            var volcano_factions = get_multi_select_key("volcano");
+            var variable_factions = get_multi_select_key("variable");
+            var passing_order = get_multi_select_key("passing_order");
+            var temple_scoring = get_multi_select_key("score9");
+            var scoring_r1 = get_multi_select_key("score1");
+            var orders_r1 = get_multi_select_key("order1");
+            var leech_pw_r1 = get_multi_select_key("leech1");
+            var rank_in_game = get_multi_select_key("rank");
+            var period = get_multi_select_key("period", true);
+
+            //Favors are optional and can be in any order
+            if (FAVpat)
+                FAVpat = ".*" + FAVpat;
+
+            var key_pattern =
+                map_type + // #0
+                cultist_errata + // #1
+                mini_expansion1 + // #2
+                shipping_bonus + // #3
+                additional_scoring + // #4
+                ice_factions + // #5
+                volcano_factions + // #6
+                variable_factions + // #7
+                passing_order + // #8
+                temple_scoring + // #9
+                scoring_r1 + // #10
+                orders_r1 + // #11
+                fctpat +  // #12
+                pctpat + // #13
+                ratpat + // #14
+                building_key("D") + // #15
+                building_key("TP") + // #16
+                building_key("TE") + // #17
+                building_key("SA") + // #18
+                building_key("SH") + // #19
+                BONpat +  // #20
+                leech_pw_r1 + // #21
+                //rank_in_game +
+                period + // #22-24
+                FAVpat // #25-
+            ;
+            return key_pattern;
+        }
+
+        function prepare_hash_and_get_exist_keys() {
+            var hash = window.location.hash;
+            var exist_keys = hash.substr(1).split(",");
+
+            if (hash === "") hash = "#";
+            else if (hash !== "#") hash += ",";
+
+            return [hash, exist_keys];
+        }
+
+        function enumerate(id) {
+            var item = $("#" + id);
+            if (item.type = "select-multiple") {
+
+                var prev_val = item.val();
+                var new_keys = item.children().map(function (i, opt) {
+                    item.val(opt.value);
+                    return get_key_from_selection();
                 });
 
-                if( ret === undefined )
-                {
-                    $("#error").show();
-                }
-                else
-                {
-                    $("#error").hide();
 
-                    var chunks = get_regex_chunks( key_pattern );
-
-                    var map_type = 'multi';
-                    if ( chunks[0] === 'a' ) map_type = 'Original';
-                    else if ( chunks[0] === 'b' ) map_type = 'F&I Side 1';
-                    else if ( chunks[0] === 'c' ) map_type = 'F&I Side 2';
-                    else if ( chunks[0] === 'h' ) map_type = 'Loon Lakes v1.5';
-                    else if ( chunks[0] === '.' ) map_type = 'any';
-
-                    var cultists_errata = 'both';
-                    if ( chunks[1] === '0' ) cultists_errata = 'w/o eratta';
-                    else if ( chunks[1] === '1' ) cultists_errata = 'with eratta';
-                    else if ( chunks[1] === '01' ) cultists_errata = 'both';
-
-                    var option_desc = '';
-                    if (chunks[2] === '0') option_desc += 'TW:off<br>';
-                    if (chunks[2] === '1') option_desc += 'TW:on<br>';
-                    
-                    if (chunks[3] === '0') option_desc += 'BON10:off<br>';
-                    if (chunks[3] === '1') option_desc += 'BON10:on<br>';
-                    
-                    if (chunks[4] === '0') option_desc += 'FinalScoring:off<br>';
-                    if (chunks[4] === '1') option_desc += 'FinalScoring:on<br>';
-                    
-                    if (chunks[5] === '0') option_desc += 'Ice:off<br>';
-                    if (chunks[5] === '1') option_desc += 'Ice:on<br>';
-                    
-                    if (chunks[6] === '0') option_desc += 'Volcano:off<br>';
-                    if (chunks[6] === '1') option_desc += 'Volcano:on<br>';
-                    
-                    if (chunks[7] === '0') option_desc += 'Variable:off<br>';
-                    if (chunks[7] === '1') option_desc += 'Variable:v1<br>';
-                    if (chunks[7] === '2') option_desc += 'Variable:v2<br>';
-                    if (chunks[7] === '3') option_desc += 'Variable:v3<br>';
-                    if (chunks[7] === '4') option_desc += 'Variable:v4<br>';
-                    if (chunks[7] === '5') option_desc += 'Variable:v5<br>';
-                    
-                    if (chunks[8] === '0') option_desc += 'PassingOrder:off<br>';
-                    if (chunks[8] === '1') option_desc += 'PassingOrder:on<br>';
-                    
-                    if (chunks[9] === '0') option_desc += 'SCORE9:off<br>';
-                    if (chunks[9] === '1') option_desc += 'SCORE9:on<br>';
-                    
-                    var scoring_r1 = 'any';
-                    if (chunks[10] !== '.') scoring_r1 = chunks[10];
-                    
-                    var order_r1 = 'any';
-                    if (chunks[11] !== '.') order_r1 = chunks[11];
-
-                    var fact = key_to_faction( chunks[12] );
-
-                    var pcnt = chunks[13];
-                    if( pcnt === '.' ) pcnt = "1-7P";
-                    else if( pcnt.length === 1 )
-                    {
-                        pcnt += "P";
-                    }
-                    else
-                    {
-                        //multi-select
-                        if( pcnt === "234" ) pcnt = "2-4P";
-                        else if( pcnt === "2345" ) pcnt = "2-5P";
-                        else if( pcnt === "23456" ) pcnt = "2-6P";
-                        else if( pcnt === "234567" ) pcnt = "2-7P";
-                        else if( pcnt === "345" ) pcnt = "3-5P";
-                        else if( pcnt === "3456" ) pcnt = "3-6P";
-                        else if( pcnt === "34567" ) pcnt = "3-7P";
-                        else if( pcnt === "456" ) pcnt = "4-6P";
-                        else if( pcnt === "4567" ) pcnt = "4-7P";
-                        else if( pcnt === "567" ) pcnt = "5-7P";
-                        else if( pcnt === "123" ) pcnt = "1-3P";
-                        else if( pcnt === "1234" ) pcnt = "1-4P";
-                        else if( pcnt === "12345" ) pcnt = "1-5P";
-                        else if( pcnt === "123456" ) pcnt = "1-6P";
-                        else if( pcnt === "1234567" ) pcnt = "1-7P";
-                        else pcnt = pcnt.split("").join(",")+"P";
-
-                    }
-
-                    var rate = key_to_rating ( chunks[14] );
-
-                    function building_str( chunk, build )
-                    {
-                        var item  = $("#"+build);
-                        var max = parseInt(item.attr('max'));
-                        if( chunk === '.')       return "";
-                        if( chunk.length === 1 )
-                        {
-                            if( chunk === '1' )
-                                return build;
-                            return chunk+build;
-                        }
-                        if (chunk === max+"-"+max) {
-                            return max+build;
-                        }
-                        return chunk+build;
-                    }
-                    var BUILD = 
-                        building_str( chunks[15], "D" ) +
-                        building_str( chunks[16], "TP" ) +
-                        building_str( chunks[17], "TE" ) +
-                        building_str( chunks[18], "SA" ) +
-                        building_str( chunks[19], "SH" ) ;
-                    var BON = chunks[20];
-                    if( BON === "." || BON === undefined ) BON = "";
-
-                    var leech1 = chunks[21];
-                    if (leech1 === '0') leech1 = '0-3';
-                    if (leech1 === '1') leech1 = '4-7';
-                    if (leech1 === '2') leech1 = '8-11';
-                    if (leech1 === '3') leech1 = '12-15';
-                    if (leech1 === '4') leech1 = '16+';
-                    if (leech1 === '01') leech1 = '0-7';
-                    if (leech1 === '012') leech1 = '0-11';
-                    if (leech1 === '0123') leech1 = '0-15';
-                    if (leech1 === '01234') leech1 = 'any';
-                    if (leech1 === '.') leech1 = 'any';
-                    if (leech1 === '12') leech1 = '4-11';
-                    if (leech1 === '123') leech1 = '4-15';
-                    if (leech1 === '1234') leech1 = '4+';
-                    if (leech1 === '23') leech1 = '8-15';
-                    if (leech1 === '234') leech1 = '8+';
-                    if (leech1 === '34') leech1 = '12+';
-                    
-                    //var position = chunks[22];
-                    //if (position === '.') position = "any";
-                    
-                    var period = (chunks[22] || '.')+(chunks[23] || '.')+(chunks[24] || '.');
-                    if (period === "...") {
-                        period = "any";
-                    } else {
-                        period = "20"+chunks[22]+chunks[23]+" ";
-                        switch(chunks[24]) {
-                            case '1': period += "Jan"; break;
-                            case '2': period += "Feb"; break;
-                            case '3': period += "Mar"; break;
-                            case '4': period += "Apr"; break;
-                            case '5': period += "May"; break;
-                            case '6': period += "Jun"; break;
-                            case '7': period += "Jul"; break;
-                            case '8': period += "Aug"; break;
-                            case '9': period += "Sep"; break;
-                            case 'a': period += "Oct"; break;
-                            case 'b': period += "Nov"; break;
-                            case 'c': period += "Dec"; break;
-                        }
-                    }
-                    
-                    
-
-                    var FAV = chunks[25];
-                    if( FAV === "." || FAV === undefined ) FAV = "";
-
-                    var strBON = [];
-                    for( var i = 0; i < BON.length; i++ )
-                        strBON.push( ALLBON[ BON[i] ] );
-                    BON = strBON.join("<br>");
-
-                    var strFAV = [];
-                    for( var i = 0; i < FAV.length; i++ )
-                        strFAV.push( ALLFAV[ FAV[i] ] );
-                    FAV = strFAV.join("<br>");
-
-                    var desc = [];
-                    if( BUILD ) desc.push( BUILD );
-                    if( BON ) desc.push( BON );
-                    if( FAV ) desc.push( FAV );
-                    desc = desc.join("<br>");
-
-                    var tooltip = BON + " " + FAV;
-
-                    var table = $("#stats_tab");
-                    if ( !table.exists() ) {
-                        table = $("<table>",{id:"stats_tab",class:"stat-cont",style:"font-family: 'Courier New', monospace;border-collapse:collapse"});
-                        $("#stats").append(table);
-                    }
-                    var section = $("#"+fact );
-                    if( !section.exists() )
-                    {
-                        section = $("<tbody>",{id:fact,class:"stat-cont",style:"font-family: 'Courier New', monospace;border-collapse:collapse; margin-top: 20px;"});
-                        var header = $("<tr>",{style:"border-bottom:1px solid gray;"});
-                            header.append( "<th style='text-align:left; font-family:serif;'>"+fact );
-                            //header.append( "<th style='border-left:1px solid gray;'>Position" );
-                            header.append( "<th style='border-left:1px solid gray;'>Year-Month" );
-                            header.append( "<th style='border-left:1px solid gray;width:4em;'>Map." );
-                            header.append( "<th style='border-left:1px solid gray;'>Cultists<br>errata" );
-                            header.append( "<th style='border-left:1px solid gray;width:8em;'>Options." );
-                            header.append( "<th style='border-left:1px solid gray;'>Rat." );
-                            header.append( "<th style='border-left:1px solid gray;'>R1:Score" );
-                            header.append( "<th style='border-left:1px solid gray;'>R1:Order" );
-                            header.append( "<th style='border-left:1px solid gray;'>R1:leechPw" );
-                            header.append( "<th style='border-left:1px solid gray;width:6em;'>Desc." );
-                            header.append( "<th colspan=3 style='border-left:1px solid gray;width:10em;'>VP" );
-                            header.append( "<th colspan=3 style='border-left:1px solid gray;width:11em;'>Margin" );
-                            header.append( "<th style='border-left:1px solid gray;width:6em;'>Count" );
-                        section.append( header );
-                        $("#stats_tab").append( section );
-                    }
-
-                    var row = $("<tr>", {id:key_pattern,class:'stat'});
-                        row.append( "<td style=''>" +pcnt );
-                        //row.append( "<td style='border-left:1px solid gray;'>"+position );
-                        row.append( "<td style='border-left:1px solid gray;'>"+period );
-                        row.append( "<td style='border-left:1px solid gray;'>"+map_type );
-                        row.append( "<td style='border-left:1px solid gray;'>"+cultists_errata );
-                        row.append( "<td style='border-left:1px solid gray;'>"+option_desc);
-                        row.append( "<td style='border-left:1px solid gray;'>"+ rate );
-                        row.append( "<td style='border-left:1px solid gray;'>"+ scoring_r1 );
-                        row.append( "<td style='border-left:1px solid gray;'>"+ order_r1 );
-                        row.append( "<td style='border-left:1px solid gray;'>"+ leech1 );
-                        row.append( "<td class='data' style='text-align:left'>"+desc+"<span class='tooltip'>"+tooltip+"</span>" );
-
-                        row.append( "<td class='data'>" +ret[0].mean().toFixed(2)+"<span class='tooltip'>Standard Deviation:"+ret[0].std().toFixed(2)+"</span>");
-                        row.append( "<td>±" );
-                        row.append( "<td>"+ret[0].meanstd().toFixed(2) );
-
-                        row.append( "<td class='data'>" +ret[1].mean().toFixed(2)+"<span class='tooltip'>Standard Deviation:"+ret[1].std().toFixed(2)+"</span>");
-                        row.append( "<td>±" );
-                        row.append( "<td>"+ret[1].meanstd().toFixed(2) );
-
-                        row.append( "<td style='border-left:1px solid gray;text-align:right'>"+ret[1].n );
-
-                    section.append( row );
-
-                    table.height( section.height() +2 );
-                }
-            }
-
-            function get_multi_select_key( name, opt )
-            {
-                var item  = $("#"+name);
-                var value = item.val();
-                var regpat ="";
-                if( value === null )
-                {
-                    if( opt === undefined ) regpat ="."; //wildcard
-                }
-                else if ( value instanceof Array ) {
-                    if( value.length === 1 )
-                        regpat = value[0];
-                    else if( value.length === item.children().length )
-                        regpat = ".";
-                    else 
-                        regpat = "["+value.join("")+"]";
-                }
-                else regpat = value;
-                return regpat;
-            }
-
-            function get_key_from_selection( ) 
-            {
-                var fctpat = get_multi_select_key( "faction" );
-                var pctpat = get_multi_select_key( "pcount" );
-                var ratpat = get_multi_select_key( "rating" );
-                var BONpat = get_multi_select_key( "BON" );
-                var FAVpat = get_multi_select_key( "FAV", true );
-                
-                var map_type = get_multi_select_key( "map" );
-                var cultist_errata = get_multi_select_key( "cultists" );
-                var mini_expansion1 = get_multi_select_key( "useTW" );
-                var shipping_bonus = get_multi_select_key( "useBON10" );
-                var additional_scoring = get_multi_select_key( "additional" );
-                var ice_factions = get_multi_select_key( "ice" );
-                var volcano_factions = get_multi_select_key( "volcano" );
-                var variable_factions = get_multi_select_key( "variable" );
-                var passing_order = get_multi_select_key( "passing_order" );
-                var temple_scoring = get_multi_select_key( "score9" );
-                var scoring_r1 = get_multi_select_key( "score1" );
-                var orders_r1 = get_multi_select_key( "order1" );
-                var leech_pw_r1 = get_multi_select_key( "leech1" );
-                var rank_in_game = get_multi_select_key( "rank" );
-                var period = get_multi_select_key( "period" , true);
-
-                //Favors are optional and can be in any order
-                if( FAVpat )
-                    FAVpat = ".*" + FAVpat;
-
-                var key_pattern = 
-                    map_type + // #0
-                    cultist_errata + // #1
-                    mini_expansion1 + // #2
-                    shipping_bonus + // #3
-                    additional_scoring + // #4
-                    ice_factions + // #5
-                    volcano_factions + // #6
-                    variable_factions + // #7
-                    passing_order + // #8
-                    temple_scoring + // #9
-                    scoring_r1 + // #10
-                    orders_r1 + // #11
-                    fctpat +  // #12
-                    pctpat + // #13
-                    ratpat + // #14
-                    building_key( "D") + // #15
-                    building_key("TP") + // #16
-                    building_key("TE") + // #17
-                    building_key("SA") + // #18
-                    building_key("SH") + // #19
-                    BONpat +  // #20
-                    leech_pw_r1 + // #21
-                    //rank_in_game +
-                    period + // #22-24
-                    FAVpat // #25-
-                    ;
-                return key_pattern;
-            }
-
-            function prepare_hash_and_get_exist_keys()
-            {
-                var hash = window.location.hash;
-                var exist_keys = hash.substr(1).split(",");
-
-                if( hash === "" ) hash = "#";
-                else if( hash !== "#" ) hash += ",";
-
-                return [hash,exist_keys];
-            }
-
-            function enumerate( id )
-            {
-                var item = $("#"+id );
-                if (item.type="select-multiple") {
-                
-                    var prev_val = item.val();
-                    var new_keys = item.children().map(function(i,opt){
-                            item.val( opt.value );
-                            return get_key_from_selection();
-                            });
-
-
-                    var hash_keys = prepare_hash_and_get_exist_keys();
-                    var hash = hash_keys[0];
-                    var exist_keys = hash_keys[1];
-
-                    $.each( new_keys, function( i, new_key ) {
-                        if( $.inArray(new_key, exist_keys ) < 0  )
-                        {
-                            get_stats_by_key( new_key );
-                            hash += new_key + ",";
-                        }
-                    } );
-                    if( window.location.hash !== hash )
-                        window.location = hash ;
-
-                    //restore previous selection
-                    item.val( prev_val );
-                }
-                if (item.type="select") {
-                
-                    var prev_val = item.val();
-                    var new_keys = item.children().map(function(i,opt){
-                            item.val( opt.value );
-                            return get_key_from_selection();
-                            });
-
-
-                    var hash_keys = prepare_hash_and_get_exist_keys();
-                    var hash = hash_keys[0];
-                    var exist_keys = hash_keys[1];
-
-                    $.each( new_keys, function( i, new_key ) {
-                        if( $.inArray(new_key, exist_keys ) < 0  )
-                        {
-                            get_stats_by_key( new_key );
-                            hash += new_key + ",";
-                        }
-                    } );
-                    if( window.location.hash !== hash )
-                        window.location = hash ;
-
-                    //restore previous selection
-                    item.val( prev_val );
-                }
-                if (item.type="number") {
-                    var prev_val = item.val();
-                    var max = parseInt(item.attr('max'));
-                    var min = parseInt(item.attr('min'));
-
-                    var new_keys = new Array(0);
-                    for (var i = min; i <= max; i++) {
-                        item.val( String(i) );
-                        new_keys.push(get_key_from_selection());
-                    }
-                    var hash_keys = prepare_hash_and_get_exist_keys();
-                    var hash = hash_keys[0];
-                    var exist_keys = hash_keys[1];
-
-                    $.each( new_keys, function( i, new_key ) {
-                        if( $.inArray(new_key, exist_keys ) < 0  )
-                        {
-                            get_stats_by_key( new_key );
-                            hash += new_key + ",";
-                        }
-                    } );
-                    if( window.location.hash !== hash )
-                        window.location = hash ;
-
-                    //restore previous selection
-                    item.val( prev_val );
-                }
-            }
-
-            function get_stats()
-            {
-                var new_key =  get_key_from_selection();
                 var hash_keys = prepare_hash_and_get_exist_keys();
                 var hash = hash_keys[0];
                 var exist_keys = hash_keys[1];
-                if( $.inArray(new_key, exist_keys ) < 0  )
-                {
-                    get_stats_by_key( new_key );
-                    hash += new_key + ",";
+
+                $.each(new_keys, function (i, new_key) {
+                    if ($.inArray(new_key, exist_keys) < 0) {
+                        get_stats_by_key(new_key);
+                        hash += new_key + ",";
+                    }
+                });
+                if (window.location.hash !== hash)
+                    window.location = hash;
+
+                //restore previous selection
+                item.val(prev_val);
+            }
+            if (item.type = "select") {
+
+                var prev_val = item.val();
+                var new_keys = item.children().map(function (i, opt) {
+                    item.val(opt.value);
+                    return get_key_from_selection();
+                });
+
+
+                var hash_keys = prepare_hash_and_get_exist_keys();
+                var hash = hash_keys[0];
+                var exist_keys = hash_keys[1];
+
+                $.each(new_keys, function (i, new_key) {
+                    if ($.inArray(new_key, exist_keys) < 0) {
+                        get_stats_by_key(new_key);
+                        hash += new_key + ",";
+                    }
+                });
+                if (window.location.hash !== hash)
+                    window.location = hash;
+
+                //restore previous selection
+                item.val(prev_val);
+            }
+            if (item.type = "number") {
+                var prev_val = item.val();
+                var max = parseInt(item.attr('max'));
+                var min = parseInt(item.attr('min'));
+
+                var new_keys = new Array(0);
+                for (var i = min; i <= max; i++) {
+                    item.val(String(i));
+                    new_keys.push(get_key_from_selection());
+                }
+                var hash_keys = prepare_hash_and_get_exist_keys();
+                var hash = hash_keys[0];
+                var exist_keys = hash_keys[1];
+
+                $.each(new_keys, function (i, new_key) {
+                    if ($.inArray(new_key, exist_keys) < 0) {
+                        get_stats_by_key(new_key);
+                        hash += new_key + ",";
+                    }
+                });
+                if (window.location.hash !== hash)
+                    window.location = hash;
+
+                //restore previous selection
+                item.val(prev_val);
+            }
+        }
+
+        function get_stats() {
+            var new_key = get_key_from_selection();
+            var hash_keys = prepare_hash_and_get_exist_keys();
+            var hash = hash_keys[0];
+            var exist_keys = hash_keys[1];
+            if ($.inArray(new_key, exist_keys) < 0) {
+                get_stats_by_key(new_key);
+                hash += new_key + ",";
+            }
+
+            if (window.location.hash !== hash)
+                window.location = hash;
+        }
+
+        var ALLBON = {};
+        var ALLFAV = {};
+
+        $(document).ready(function () {
+
+            $("#BON").children().each(function (i, opt) {
+                ALLBON[opt.value] = opt.text;
+            });
+            $("#FAV").children().each(function (i, opt) {
+                ALLFAV[opt.value] = opt.text;
+            });
+            var s = $("#faction");
+            //$("<option/>", { value: '.', text:'All' } ).appendTo( s );
+            for (var i = 0; i < factions.length; i++)
+                $("<option/>", {value: String.fromCharCode(97 + i), text: factions[i]}).appendTo(s);
+
+            //$("#stats").height( $(window).height() - $("#header").height() - 10 );
+
+        });
+        window.onpopstate = function (e) {
+            var hash = window.location.hash;
+            var exist_keys = hash.substr(1).split(",");
+            $(".stat").each(function (i, tr) {
+                if ($.inArray(tr.id, exist_keys) < 0) {
+                    tr.remove();
+                }
+            });
+            $(".stat-cont tbody").each(function () {
+                if (this.children.length === 1) {
+                    $(this).parent().parent().remove();
+                }
+            });
+            $.each(exist_keys, function (i, key) {
+                if (key !== "" && document.getElementById(key) === null) {
+                    get_stats_by_key(key);
                 }
 
-                if( window.location.hash !== hash )
-                    window.location = hash ;
-            }
-
-            var ALLBON = {};
-            var ALLFAV = {};
-
-            $( document ).ready( function() {
-
-                $("#BON").children().each( function( i, opt ) { ALLBON[opt.value] = opt.text; } );
-                $("#FAV").children().each( function( i, opt ) { ALLFAV[opt.value] = opt.text; } );
-                var s = $("#faction");
-                //$("<option/>", { value: '.', text:'All' } ).appendTo( s );
-                for( var i = 0; i< factions.length; i++ )
-                    $("<option/>", {value: String.fromCharCode(97+i), text:factions[i]} ).appendTo( s );
-
-                //$("#stats").height( $(window).height() - $("#header").height() - 10 );
-
             });
-            window.onpopstate = function( e ) {
-                var hash = window.location.hash;
-                var exist_keys = hash.substr(1).split(",");
-                $(".stat").each( function( i, tr ) {
-                    if( $.inArray(tr.id, exist_keys ) < 0  )
-                    {
-                        tr.remove();
-                    }
-                });
-                $(".stat-cont tbody").each( function( ) {
-                    if( this.children.length === 1 )
-                    {
-                        $(this).parent().parent().remove();
-                    }
-                });
-                $.each( exist_keys, function( i, key ) {
-                    if( key !== "" && document.getElementById(key) === null )
-                    {
-                        get_stats_by_key( key );
-                    }
 
-                } );
+        };
+        /*
+        $(window).resize( function() {
+            $("#stats").height($(window).height() - $("#header").height() -10  );
+        });
+        */
+    </script>
+    <style type="text/css">
+        .tooltip {
+            display: none;
 
-            };
-            /*
-            $(window).resize( function() {
-                $("#stats").height($(window).height() - $("#header").height() -10  );
-            });
-            */
-        </script>
-        <style type="text/css">
-            .tooltip {
-                display: none;
+            color: red;
+            background-color: white;
+            border: 1px solid black;
+            margin-top: -1em;
+            top: 100px;
+            left: 10px;
+            position: absolute;
+            z-index: 1000;
+        }
 
-                color: red;
-                background-color:white;
-                border: 1px solid black;
-                margin-top:-1em;
-                top:100px;
-                left:10px;
-                position: absolute;
-                z-index: 1000;
-            }
-            .data:hover .tooltip {
-                display:block;
-            }
-            .data {
-                border-left:1px solid gray;
-                text-align:right;
-             }
-        </style>
-    </head>
+        .data:hover .tooltip {
+            display: block;
+        }
 
-    <body>
-        <div id="header" >
-            Choose Faction, Player count, Rating (per faction), first round buildings (that they passed with), 0th round BON tiles and any round 1 FAV.
-            Press "Stats!" to calculate for the selected restrictions.<br>
-            Pressing "Enumerate" under a field will step through every option in that field while keeping the selection in the other fields.<br>
-            Checkboxes mean "strictly" equal to that value, otherwise its equal or greater.
-            "VP" is the raw score at the end of the game. "Margin" is [ score - (that game's avg score)]<br>
-            Hover over a statistic to view the standard deviation. Linking to a page with the above URL will re-calculate the stats when loading.
-        </div>
-        <table>
-            <tr><th>rating timestamp:</th><td id="rating_timestamp">2017-04-02 10:35 UTC</td></tr>
-            <tr><th>results used till:</th><td id="last_updated">Mar 2017</td></tr>
-        </table>
-        <table>
-            <tr><th>Map Type</th><th>Cultists Errata</th><th>TW6-8</th><th>BON10</th><th>Ice</th><th>Volcano</th><th>Variable</th><th>Passing Order</th>
-                <th>SCORE9(TE>>4)</th>
-            </tr>
-            <tr><td>
-                <select id="map" multiple>
-                    <option value='a'>Original
-                    <option value='b'>Fire & Ice, Side 1
-                    <option value='c'>Fire & Ice, Side 2
-                    <option value='h'>Loon Lakes v1.5
-                </select></td>
-                <td><select id="cultists" multiple>
-                    <option value='0'>before
-                    <option value='1'>after
-                </select></td>
-                <td><select id="useTW" multiple>
-                    <option value='0'>none
-                    <option value='1'>available
-                </select></td>
-                <td><select id="useBON10" multiple>
-                    <option value='0'>none
-                    <option value='1'>available
-                </select></td>
-                <td><select id="ice" multiple>
-                    <option value='0'>none
-                    <option value='1'>available
-                </select></td>
-                <td><select id="volcano" multiple>
-                    <option value='0'>none
-                    <option value='1'>available
-                </select></td>
-                <td><select id="variable" multiple>
-                    <option value='0'>none
-                    <option value='1'>available
-                    <option value='2'>available(testing v2)
-                    <option value='3'>available(testing v3)
-                    <option value='4'>available(testing v4)
-                    <option value='5'>available(currently v5)
-                </select></td>
-                <td><select id="passing_order" multiple>
-                    <option value='0'>none
-                    <option value='1'>available
-                </select></td>
-                <td><select id="score9" multiple>
-                    <option value='0'>none
-                    <option value='1'>available
-                </select></td>
-              </tr>
-              <tr>
-                <td><input type="button" onclick="enumerate('map')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('cultists')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('useTW')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('useBON10')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('ice')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('volcano')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('variable')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('passing_order')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('score9')" value="Enumerate"/></td>
-            </tr>
-            </table>
-            <table>
-              <tr><th>Scoring at R1</th><th>Addtional Scoring</th>
-                <th>Player Count</th><th>Starting Order</th><th>Faction</th>
-                <th>Player Rating</th></tr>
-              <tr>
-                <td><select id="score1" multiple>
-                    <option value='1'>S1 SPD>>2 1Earth->1c
-                    <option value='2'>S2 TOWN>>5 4Earth->1Spade
-                    <option value='3'>S3 D>>2 4Water->1P
-                    <option value='4'>S4 SA/SH>>5 2Fire->1w
-                    <option value='5'>S5 D>>2 4Fire->4pw
-                    <option value='6'>S6 TP>>3 4Water->1Spade
-                    <option value='7'>S7 SA/SH>>5 2Air->1w
-                    <option value='8'>S8 TP>>3 4Air->1Spade
-                    <option value='9'>S9 TE>>4 1Cult_P->2c
-                </select></td>
-                <td><select id="additional" multiple>
-                    <option value='0'>none
-                    <option value='1'>used
-                </select></td>
-                <td><select id="pcount" multiple >
-                        <option value='1'>1
-                        <option value='2'>2
-                        <option value='3'>3
-                        <option value='4'>4
-                        <option value='5'>5
-                        <option value='6'>6
-                        <option value='7'>7
-                    </select></td>
-                <td><select id="order1" multiple>
-                    <option value='1'>1
-                    <option value='2'>2
-                    <option value='3'>3
-                    <option value='4'>4
-                    <option value='5'>5
-                    <option value='6'>6
-                    <option value='7'>7
-                </select></td>
-                <td><select id="faction" multiple></select></td>
-                <td><select id="rating"  multiple >
-                        <option value='4'>Best(1250-)
-                        <option value='3'>Good(1100-1249)
-                        <option value='2'>Poor(1000-1099)
-                        <option value='1'>Bad(0-999)
-                        <option value='0'>N/A(not rated)
-                    </select></td>
-            </tr>
-            <tr>
-                <td><input type="button" onclick="enumerate('score1')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('additional')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('pcount')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('order1')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('faction')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('rating')" value="Enumerate"/></td>
-            </tr>
-        </table>
-        <table>
-            <tr>
-                <th>Year-Month</th>
-                <th>D <input id="D_strict"  type="checkbox" /></th>
-                <th>TP<input id="TP_strict" type="checkbox" /></th>
-                <th>TE<input id="TE_strict" type="checkbox" /></th>
-                <th>SA<input id="SA_strict" type="checkbox" /></th>
-                <th>SH<input id="SH_strict" type="checkbox" /></th>
-                <th>Starting BON</th>
-                <th>Leech:pw at R1</th>
-                <th>FAV</th>
-            </tr>
-            <tr>
-                <td><select id="period">
-                        <option value="...">any
-                        <option value="132">2013 Feb
-                        <option value="133">2013 Mar
-                        <option value="134">2013 Apr
-                        <option value="135">2013 May
-                        <option value="136">2013 Jun
-                        <option value="137">2013 Jul
-                        <option value="138">2013 Aug
-                        <option value="139">2013 Sep
-                        <option value="13a">2013 Oct
-                        <option value="13b">2013 Nov
-                        <option value="13c">2013 Dec
-                        <option value="141">2014 Jan
-                        <option value="142">2014 Feb
-                        <option value="143">2014 Mar
-                        <option value="144">2014 Apr
-                        <option value="145">2014 May
-                        <option value="146">2014 Jun
-                        <option value="147">2014 Jul
-                        <option value="148">2014 Aug
-                        <option value="149">2014 Sep
-                        <option value="14a">2014 Oct
-                        <option value="14b">2014 Nov
-                        <option value="14c">2014 Dec
-                        <option value="151">2015 Jan
-                        <option value="152">2015 Feb
-                        <option value="153">2015 Mar
-                        <option value="154">2015 Apr
-                        <option value="155">2015 May
-                        <option value="156">2015 Jun
-                        <option value="157">2015 Jul
-                        <option value="158">2015 Aug
-                        <option value="159">2015 Sep
-                        <option value="15a">2015 Oct
-                        <option value="15b">2015 Nov
-                        <option value="15c">2015 Dec
-                        <option value="161">2016 Jan
-                        <option value="162">2016 Feb
-                        <option value="163">2016 Mar
-                        <option value="164">2016 Apr
-                        <option value="165">2016 May
-                        <option value="166">2016 Jun
-                        <option value="167">2016 Jul
-                        <option value="168">2016 Aug
-                        <option value="169">2016 Sep
-                        <option value="16a">2016 Oct
-                        <option value="16b">2016 Nov
-                        <option value="16c">2016 Dec
-                        <option value="171">2017 Jan
-                        <option value="172">2017 Feb
-                        <option value="173">2017 Mar
-                        <option value="174">2017 Apr
-                        <option value="175">2017 May
-                        <option value="176">2017 Jun
-                        <option value="177">2017 Jul
-                        <option value="178">2017 Aug
-                        <option value="179">2017 Sep
-                        <option value="17a">2017 Oct
-                        <option value="17b">2017 Nov
-                        <option value="17c">2017 Dec
-                    </select></td>
-                <td><input id="D"  type="number" value=0 min=0 max=8 /></td>
-                <td><input id="TP" type="number" value=0 min=0 max=4 /></td>
-                <td><input id="TE" type="number" value=0 min=0 max=3 /></td>
-                <td><input id="SA" type="number" value=0 min=0 max=1 /></td>
-                <td><input id="SH" type="number" value=0 min=0 max=1 /></td>
-                <td><select id="BON" multiple >
-                        <option value='0'>BON1  (Spade)
-                        <option value='1'>BON2  (Cult)
-                        <option value='2'>BON3  (6C)
-                        <option value='3'>BON4  (Ship+1)
-                        <option value='4'>BON5  (3pw,1W)
-                        <option value='5'>BON6  (SA/SH VP)
-                        <option value='6'>BON7  (TP VP)
-                        <option value='7'>BON8  (1P)
-                        <option value='8'>BON9  (D VP)
-                        <option value='9'>BON10 (Ship VP)
-                    </select></td>
-                <td><select id="leech1" multiple>
-                    <option value='0'>0-3
-                    <option value='1'>4-7
-                    <option value='2'>8-11
-                    <option value='3'>12-15
-                    <option value='4'>16+
-                </select></td>
-                <td><select id="FAV" multiple >
-                        <option value='1'>FAV1  (F3)
-                        <option value='2'>FAV2  (W3)
-                        <option value='3'>FAV3  (E3)
-                        <option value='4'>FAV4  (A3)
-                        <option value='5'>FAV5  (F2)
-                        <option value='6'>FAV6  (W2)
-                        <option value='7'>FAV7  (E2)
-                        <option value='8'>FAV8  (A2)
-                        <option value='9'>FAV9  (F1)
-                        <option value='a'>FAV10 (W1)
-                        <option value='b'>FAV11 (E1)
-                        <option value='c'>FAV12 (A1)
-                    </select></td>
-            </tr>
-            <tr>
-                <td><input type="button" onclick="enumerate('period')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('D')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('TP')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('TE')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('SA')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('SH')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('BON')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('leech1')" value="Enumerate"/></td>
-                <td><input type="button" onclick="enumerate('FAV')" value="Enumerate"/></td>
-            </tr>
-        </table>
-        <table>
-            <tr>
-                <td> <input type="button" onclick="get_stats()" value="Stats!" /></td>
-                <td> <input type="button" onclick="$('#stats').empty();window.location='#'" value="Clear" /></td>
-                <td> <span id="error" style="display:none">No Matches!</span> </td>
-            </tr>
-        </table>
-        <table id="stats" style="
+        .data {
+            border-left: 1px solid gray;
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+<div id="header">
+    Choose Faction, Player count, Rating (per faction), first round buildings (that they passed with), 0th round BON
+    tiles and any round 1 FAV.
+    Press "Stats!" to calculate for the selected restrictions.<br>
+    Pressing "Enumerate" under a field will step through every option in that field while keeping the selection in the
+    other fields.<br>
+    Checkboxes mean "strictly" equal to that value, otherwise its equal or greater.
+    "VP" is the raw score at the end of the game. "Margin" is [ score - (that game's avg score)]<br>
+    Hover over a statistic to view the standard deviation. Linking to a page with the above URL will re-calculate the
+    stats when loading.
+</div>
+<table>
+    <tr>
+        <th>rating timestamp:</th>
+        <td id="rating_timestamp">2017-04-02 10:35 UTC</td>
+    </tr>
+    <tr>
+        <th>results used till:</th>
+        <td id="last_updated">Mar 2017</td>
+    </tr>
+</table>
+<table>
+    <tr>
+        <th>Map Type</th>
+        <th>Cultists Errata</th>
+        <th>TW6-8</th>
+        <th>BON10</th>
+        <th>Ice</th>
+        <th>Volcano</th>
+        <th>Variable</th>
+        <th>Passing Order</th>
+        <th>SCORE9(TE>>4)</th>
+    </tr>
+    <tr>
+        <td>
+            <select id="map" multiple>
+                <option value='a'>Original
+                <option value='b'>Fire & Ice, Side 1
+                <option value='c'>Fire & Ice, Side 2
+                <option value='h'>Loon Lakes v1.5
+            </select></td>
+        <td><select id="cultists" multiple>
+            <option value='0'>before
+            <option value='1'>after
+        </select></td>
+        <td><select id="useTW" multiple>
+            <option value='0'>none
+            <option value='1'>available
+        </select></td>
+        <td><select id="useBON10" multiple>
+            <option value='0'>none
+            <option value='1'>available
+        </select></td>
+        <td><select id="ice" multiple>
+            <option value='0'>none
+            <option value='1'>available
+        </select></td>
+        <td><select id="volcano" multiple>
+            <option value='0'>none
+            <option value='1'>available
+        </select></td>
+        <td><select id="variable" multiple>
+            <option value='0'>none
+            <option value='1'>available
+            <option value='2'>available(testing v2)
+            <option value='3'>available(testing v3)
+            <option value='4'>available(testing v4)
+            <option value='5'>available(currently v5)
+        </select></td>
+        <td><select id="passing_order" multiple>
+            <option value='0'>none
+            <option value='1'>available
+        </select></td>
+        <td><select id="score9" multiple>
+            <option value='0'>none
+            <option value='1'>available
+        </select></td>
+    </tr>
+    <tr>
+        <td><input type="button" onclick="enumerate('map')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('cultists')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('useTW')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('useBON10')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('ice')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('volcano')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('variable')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('passing_order')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('score9')" value="Enumerate"/></td>
+    </tr>
+</table>
+<table>
+    <tr>
+        <th>Scoring at R1</th>
+        <th>Addtional Scoring</th>
+        <th>Player Count</th>
+        <th>Starting Order</th>
+        <th>Faction</th>
+        <th>Player Rating</th>
+    </tr>
+    <tr>
+        <td><select id="score1" multiple>
+            <option value='1'>S1 SPD>>2 1Earth->1c
+            <option value='2'>S2 TOWN>>5 4Earth->1Spade
+            <option value='3'>S3 D>>2 4Water->1P
+            <option value='4'>S4 SA/SH>>5 2Fire->1w
+            <option value='5'>S5 D>>2 4Fire->4pw
+            <option value='6'>S6 TP>>3 4Water->1Spade
+            <option value='7'>S7 SA/SH>>5 2Air->1w
+            <option value='8'>S8 TP>>3 4Air->1Spade
+            <option value='9'>S9 TE>>4 1Cult_P->2c
+        </select></td>
+        <td><select id="additional" multiple>
+            <option value='0'>none
+            <option value='1'>used
+        </select></td>
+        <td><select id="pcount" multiple>
+            <option value='1'>1
+            <option value='2'>2
+            <option value='3'>3
+            <option value='4'>4
+            <option value='5'>5
+            <option value='6'>6
+            <option value='7'>7
+        </select></td>
+        <td><select id="order1" multiple>
+            <option value='1'>1
+            <option value='2'>2
+            <option value='3'>3
+            <option value='4'>4
+            <option value='5'>5
+            <option value='6'>6
+            <option value='7'>7
+        </select></td>
+        <td><select id="faction" multiple></select></td>
+        <td><select id="rating" multiple>
+            <option value='4'>Best(1250-)
+            <option value='3'>Good(1100-1249)
+            <option value='2'>Poor(1000-1099)
+            <option value='1'>Bad(0-999)
+            <option value='0'>N/A(not rated)
+        </select></td>
+    </tr>
+    <tr>
+        <td><input type="button" onclick="enumerate('score1')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('additional')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('pcount')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('order1')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('faction')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('rating')" value="Enumerate"/></td>
+    </tr>
+</table>
+<table>
+    <tr>
+        <th>Year-Month</th>
+        <th>D <input id="D_strict" type="checkbox"/></th>
+        <th>TP<input id="TP_strict" type="checkbox"/></th>
+        <th>TE<input id="TE_strict" type="checkbox"/></th>
+        <th>SA<input id="SA_strict" type="checkbox"/></th>
+        <th>SH<input id="SH_strict" type="checkbox"/></th>
+        <th>Starting BON</th>
+        <th>Leech:pw at R1</th>
+        <th>FAV</th>
+    </tr>
+    <tr>
+        <td><select id="period">
+            <option value="...">any
+            <option value="132">2013 Feb
+            <option value="133">2013 Mar
+            <option value="134">2013 Apr
+            <option value="135">2013 May
+            <option value="136">2013 Jun
+            <option value="137">2013 Jul
+            <option value="138">2013 Aug
+            <option value="139">2013 Sep
+            <option value="13a">2013 Oct
+            <option value="13b">2013 Nov
+            <option value="13c">2013 Dec
+            <option value="141">2014 Jan
+            <option value="142">2014 Feb
+            <option value="143">2014 Mar
+            <option value="144">2014 Apr
+            <option value="145">2014 May
+            <option value="146">2014 Jun
+            <option value="147">2014 Jul
+            <option value="148">2014 Aug
+            <option value="149">2014 Sep
+            <option value="14a">2014 Oct
+            <option value="14b">2014 Nov
+            <option value="14c">2014 Dec
+            <option value="151">2015 Jan
+            <option value="152">2015 Feb
+            <option value="153">2015 Mar
+            <option value="154">2015 Apr
+            <option value="155">2015 May
+            <option value="156">2015 Jun
+            <option value="157">2015 Jul
+            <option value="158">2015 Aug
+            <option value="159">2015 Sep
+            <option value="15a">2015 Oct
+            <option value="15b">2015 Nov
+            <option value="15c">2015 Dec
+            <option value="161">2016 Jan
+            <option value="162">2016 Feb
+            <option value="163">2016 Mar
+            <option value="164">2016 Apr
+            <option value="165">2016 May
+            <option value="166">2016 Jun
+            <option value="167">2016 Jul
+            <option value="168">2016 Aug
+            <option value="169">2016 Sep
+            <option value="16a">2016 Oct
+            <option value="16b">2016 Nov
+            <option value="16c">2016 Dec
+            <option value="171">2017 Jan
+            <option value="172">2017 Feb
+            <option value="173">2017 Mar
+            <option value="174">2017 Apr
+            <option value="175">2017 May
+            <option value="176">2017 Jun
+            <option value="177">2017 Jul
+            <option value="178">2017 Aug
+            <option value="179">2017 Sep
+            <option value="17a">2017 Oct
+            <option value="17b">2017 Nov
+            <option value="17c">2017 Dec
+        </select></td>
+        <td><input id="D" type="number" value=0 min=0 max=8/></td>
+        <td><input id="TP" type="number" value=0 min=0 max=4/></td>
+        <td><input id="TE" type="number" value=0 min=0 max=3/></td>
+        <td><input id="SA" type="number" value=0 min=0 max=1/></td>
+        <td><input id="SH" type="number" value=0 min=0 max=1/></td>
+        <td><select id="BON" multiple>
+            <option value='0'>BON1 (Spade)
+            <option value='1'>BON2 (Cult)
+            <option value='2'>BON3 (6C)
+            <option value='3'>BON4 (Ship+1)
+            <option value='4'>BON5 (3pw,1W)
+            <option value='5'>BON6 (SA/SH VP)
+            <option value='6'>BON7 (TP VP)
+            <option value='7'>BON8 (1P)
+            <option value='8'>BON9 (D VP)
+            <option value='9'>BON10 (Ship VP)
+        </select></td>
+        <td><select id="leech1" multiple>
+            <option value='0'>0-3
+            <option value='1'>4-7
+            <option value='2'>8-11
+            <option value='3'>12-15
+            <option value='4'>16+
+        </select></td>
+        <td><select id="FAV" multiple>
+            <option value='1'>FAV1 (F3)
+            <option value='2'>FAV2 (W3)
+            <option value='3'>FAV3 (E3)
+            <option value='4'>FAV4 (A3)
+            <option value='5'>FAV5 (F2)
+            <option value='6'>FAV6 (W2)
+            <option value='7'>FAV7 (E2)
+            <option value='8'>FAV8 (A2)
+            <option value='9'>FAV9 (F1)
+            <option value='a'>FAV10 (W1)
+            <option value='b'>FAV11 (E1)
+            <option value='c'>FAV12 (A1)
+        </select></td>
+    </tr>
+    <tr>
+        <td><input type="button" onclick="enumerate('period')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('D')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('TP')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('TE')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('SA')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('SH')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('BON')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('leech1')" value="Enumerate"/></td>
+        <td><input type="button" onclick="enumerate('FAV')" value="Enumerate"/></td>
+    </tr>
+</table>
+<table>
+    <tr>
+        <td><input type="button" onclick="get_stats()" value="Stats!"/></td>
+        <td><input type="button" onclick="$('#stats').empty();window.location='#'" value="Clear"/></td>
+        <td><span id="error" style="display:none">No Matches!</span></td>
+    </tr>
+</table>
+<table id="stats" style="
             display:-webkit-flex;
             display:flex;
             -webkit-flex-direction: column;
             flex-direction: column;
             ">
-        </table>
+</table>
 
-    </body>
+</body>
 </html>

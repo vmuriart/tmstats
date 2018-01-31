@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
+
 import math
 
 
 class Welford(object):
     """Implements Welford's algorithm for computing a running mean
-    and standard deviation as described at: 
+    and standard deviation as described at:
         https://www.johndcook.com/blog/standard_deviation/
         https://gist.github.com/alexalemi/2151722
 
