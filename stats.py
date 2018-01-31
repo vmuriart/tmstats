@@ -88,26 +88,26 @@ BLACKLIST = [
 ]
 
 FDICT = {
-    u'acolytes': 'a',
-    u'alchemists': 'b',
-    u'auren': 'c',
-    u'chaosmagicians': 'd',
-    u'cultists': 'e',
-    u'darklings': 'f',
-    u'dragonlords': 'g',
-    u'dwarves': 'h',
-    u'engineers': 'i',
-    u'fakirs': 'j',
-    u'giants': 'k',
-    u'halflings': 'l',
-    u'icemaidens': 'm',
-    u'mermaids': 'n',
-    u'nomads': 'o',
-    u'riverwalkers': 'p',
-    u'shapeshifters': 'q',
-    u'swarmlings': 'r',
-    u'witches': 's',
-    u'yetis': 't'
+    'acolytes': 'a',
+    'alchemists': 'b',
+    'auren': 'c',
+    'chaosmagicians': 'd',
+    'cultists': 'e',
+    'darklings': 'f',
+    'dragonlords': 'g',
+    'dwarves': 'h',
+    'engineers': 'i',
+    'fakirs': 'j',
+    'giants': 'k',
+    'halflings': 'l',
+    'icemaidens': 'm',
+    'mermaids': 'n',
+    'nomads': 'o',
+    'riverwalkers': 'p',
+    'shapeshifters': 'q',
+    'swarmlings': 'r',
+    'witches': 's',
+    'yetis': 't'
 }
 
 
@@ -257,17 +257,17 @@ class FactionStat(object):
     def parse_players(self, factions):
         players = []
         for faction in factions:
-            if faction[u'player'] == None:
-                players.append(u'anon-' + faction[u'faction'])
+            if faction['player'] == None:
+                players.append('anon-' + faction['faction'])
             else:
-                players.append(faction[u'player'])
-            if faction[u'faction'] == 'yetis' or faction[u'faction'] == 'icemaidens':
+                players.append(faction['player'])
+            if faction['faction'] == 'yetis' or faction['faction'] == 'icemaidens':
                 if 'fire-and-ice-factions/ice' not in self.options:
                     self.options['fire-and-ice-factions/ice'] = 1
-            if faction[u'faction'] == 'dragonlords' or faction[u'faction'] == 'acolytes':
+            if faction['faction'] == 'dragonlords' or faction['faction'] == 'acolytes':
                 if 'fire-and-ice-factions/volcano' not in self.options:
                     self.options['fire-and-ice-factions/volcano'] = 1
-            if faction[u'faction'] == 'shapeshifters' or faction[u'faction'] == 'riverwalkers':
+            if faction['faction'] == 'shapeshifters' or faction['faction'] == 'riverwalkers':
                 if 'fire-and-ice-factions/variable' not in self.options:
                     self.options['fire-and-ice-factions/variable'] = 1
         self.multifaction = 1 if len(list(set(players))) != len(players) else 0
@@ -288,7 +288,7 @@ def load():
 
 
 def save(allstats):
-    print("saving... ", )
+    print("saving... ")
     sys.stdout.flush()
     with gzip.open(GAME_FILENAME, 'w+') as game_file:
         pickle.dump(allstats, game_file)
@@ -304,19 +304,19 @@ def parse_game_file(game_fn):
     else:
         openfunc = open
     with openfunc(game_fn) as game_file:
-        print("parsing " + game_fn + "...")
+        print("parsing ", game_fn, "...")
         games = json.load(game_file)
         for game in games:
             f = dict([(i['faction'], i['player']) for i in game['factions']])
             if 'player1' in f or 'player2' in f or 'player3' in f or 'player4' in f or 'player5' in f or 'player6' in f or 'player7' in f:
-                print("Skpping game with incomplete players: " + game['game'])
+                print("Skpping game with incomplete players:", game['game'])
                 continue
             game['factions2'] = f
             if game['game'] in BLACKLIST:
-                print("Skipping irregular game: " + game['game'])
+                print("Skipping irregular game:", game['game'])
                 continue
             if 'drop-faction' in game['events']['global']:
-                print("Skipping the game has dropped players: " + game['game'])
+                print("Skipping the game has dropped players:", game['game'])
                 continue
             factions = []
             for faction in f.keys():
@@ -326,15 +326,15 @@ def parse_game_file(game_fn):
                     s = FactionStat(game, faction)
                     if s.bonus:  # Empty player count?
                         if s.multifaction > 0:
-                            print("Player of this game plays multi factions: " + s.game_id)
+                            print("Player of this game plays multi factions:", s.game_id)
                             break
                         elif s.num_nofactions > 0:
-                            print("Game with NoFaction: " + s.game_id)
+                            print("Game with NoFaction:", s.game_id)
                             break
                         else:
                             factions.append(s)
                 except KeyError as e:
-                    print(game_fn + " failed! (" + faction + " didn't have " + str(e.args) + ")")
+                    print(game_fn, "failed! (", faction, "didn't have", str(e.args), ")")
                     import pdb
                     pdb.set_trace()
             for faction1 in factions:
@@ -361,7 +361,7 @@ def parse_games(game_list=None):
             if '.json' in game:
                 allstats.extend(parse_game_file(game))
             else:
-                print(game + " is not matched")
+                print(game, "is not matched")
         except KeyboardInterrupt as e:
             break
         # except TypeError as e:
@@ -494,7 +494,7 @@ def get_statpool(allstats, statfuncs, key_func=get_key):
     statbase = [Welford() for x in statfuncs]
     for faction in allstats:
         if '1' not in faction.score_tiles:
-            print("invalid score tiles: " + faction.game_id)
+            print("invalid score tiles:", faction.game_id)
             continue
         key = key_func(faction)
         stats = statpool.setdefault(key, copy.deepcopy(statbase))
