@@ -2,11 +2,12 @@ import math
 
 
 class Welford(object):
-    """ Implements Welford's algorithm for computing a running mean
+    """Implements Welford's algorithm for computing a running mean
     and standard deviation as described at: 
-        http://www.johndcoon.com/standard_deviation.html
+        https://www.johndcook.com/blog/standard_deviation/
+        https://gist.github.com/alexalemi/2151722
 
-    can tane single values or iterables
+    can take single values or iterables
 
     Properties:
         mean    - returns the mean
@@ -59,7 +60,7 @@ class Welford(object):
             self.update(x)
 
     def __call__(self, x):
-        if hasattr(x, "__iter__"):
+        if hasattr(x, '__iter__'):
             self.consume(x)
         else:
             self.update(x)
@@ -75,9 +76,9 @@ class Welford(object):
         new.M1 = (a.n * a.M1 + b.n * b.M1) / new.n
         new.M2 = a.M2 + b.M2 + delta2 * a.n * b.n / new.n
         new.M3 = a.M3 + b.M3 + delta3 * a.n * b.n * (a.n - b.n) / (new.n * new.n) + \
-                 3.0 * delta * (a.n * b.M2 - b.n * a.M2) / new.n;
+                 3.0 * delta * (a.n * b.M2 - b.n * a.M2) / new.n
         new.M4 = a.M4 + b.M4 + delta4 * a.n * b.n * (a.n * a.n - a.n * b.n + b.n * b.n) / (new.n * new.n * new.n) + \
-                 6.0 * delta2 * (a.n * a.n * b.M2 + b.n * b.n * a.M2) / (new.n * new.n) + 4.0 * delta * (a.n * b.M3 - b.n * a.M3) / new.n;
+                 6.0 * delta2 * (a.n * a.n * b.M2 + b.n * b.n * a.M2) / (new.n * new.n) + 4.0 * delta * (a.n * b.M3 - b.n * a.M3) / new.n
 
         return new
 
@@ -108,4 +109,4 @@ class Welford(object):
         return self.n * self.M4 / (self.M2 * self.M2) - 3
 
     def __repr__(self):
-        return "{} +- {}".format(self.mean, self.std)
+        return '{} +- {}'.format(self.mean, self.std)
