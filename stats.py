@@ -4,12 +4,10 @@
 """Terra Mystica Online stats summarizer"""
 
 import copy
-import csv
 import gzip
 import json
 import os.path
 import pickle
-import sys
 from collections import defaultdict
 
 import numpy
@@ -136,7 +134,6 @@ class FactionStat(object):
         self.num_nofactions = game['player_count'] - game['events']['global']['faction-count']['round']['all']
         self.rank_in_game = 1
         self.period = game['last_update'][2:4] + hex(int(game['last_update'][5:7]))[2]
-        # del self.events # don't need this anymore!
 
     def parse_event(self, events, event_id):
         if event_id not in events:
@@ -271,8 +268,6 @@ class FactionStat(object):
                 if 'fire-and-ice-factions/variable' not in self.options:
                     self.options['fire-and-ice-factions/variable'] = 1
         self.multifaction = 1 if len(list(set(players))) != len(players) else 0
-        # if self.multifaction == 1:
-        #    print(players)
 
 
 def load():
@@ -281,7 +276,6 @@ def load():
     if os.path.isfile(GAME_FILENAME):
         with gzip.open(GAME_FILENAME) as game_file:
             print("loading... ")
-            sys.stdout.flush()
             allstats = pickle.load(game_file)
             print("done!")
     return allstats
@@ -289,7 +283,6 @@ def load():
 
 def save(allstats):
     print("saving... ")
-    sys.stdout.flush()
     with gzip.open(GAME_FILENAME, 'w+') as game_file:
         pickle.dump(allstats, game_file)
     print("done!")
@@ -335,8 +328,6 @@ def parse_game_file(game_fn):
                             factions.append(s)
                 except KeyError as e:
                     print(game_fn, "failed! (", faction, "didn't have", str(e.args), ")")
-                    import pdb
-                    pdb.set_trace()
             for faction1 in factions:
                 for faction2 in factions:
                     if faction1.score < faction2.score:
@@ -357,16 +348,12 @@ def parse_games(game_list=None):
         game_list = map(lambda g: GAME_PATH + os.path.sep + g, os.listdir(GAME_PATH))
     for game in game_list:
         try:
-            # allstats = []
             if '.json' in game:
                 allstats.extend(parse_game_file(game))
             else:
                 print(game, "is not matched")
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             break
-        # except TypeError as e:
-        #    print(game, "is not game json")
-        #    continue
     return allstats
 
 
@@ -526,14 +513,8 @@ def save_stats(statpool, filename='docs/stats.json'):
         json.dump(statpool, f, default=jsonify, indent=2)
 
 
-def save_raw(statpool, filename='stats.csv'):
-    with open(filename, 'w+') as f:
-        writer = csv.writer(f, lineterminator='\n')
-        writer.writerow(list)
-
-
 if __name__ == '__main__':
-    debug = False  # sys.argv[0] == '-d' # False
+    debug = False
 
     try:
         with open('ratings.json') as f:
@@ -554,4 +535,3 @@ if __name__ == '__main__':
 
     save_stats(compute_stats(allstats, get_key2), 'docs/chooser.json')
     print("Finished")
-    # save_raw(statpool)
