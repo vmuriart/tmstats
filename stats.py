@@ -345,9 +345,9 @@ def parse_games(game_list=None):
     return allstats
 
 
-"""
-Here and below are parsing stats into web json
-"""
+#####
+# Here and below are parsing stats into web json
+#####
 
 try:
     with open("ratings.json") as f:
@@ -507,20 +507,6 @@ def get_statpool(allstats, statfuncs, key_func=get_key):
         for i, statfunc in enumerate(statfuncs):
             stats[i](statfunc(faction))
     return statpool
-
-
-"""
-# Deprecated
-def compute_vp_stats(allstats):
-    vp_stats = {}
-    vp_factstats = {}
-    for game, factions in allstats.items():
-        for faction in factions:
-            for source, vp in faction.vp_source.items():
-                vp_stats.setdefault(source, Welford())(vp)
-                vp_factstats.setdefault(faction.name, dict()).setdefault(source, Welford())(vp)
-    return vp_stats, vp_factstats
-"""
 
 
 def compute_stats(allstats, key_func):
