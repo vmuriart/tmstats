@@ -6,17 +6,17 @@
 import copy
 import gzip
 import json
-import os.path
 import pickle
 from collections import defaultdict
+from pathlib import Path
 
 import numpy
 
 from welford import Welford
 
-GAME_PATH = 'games'
-
-GAME_FILENAME = 'games.pickle.gz'
+PACKAGE_DIR = Path(__file__).parent
+GAME_PATH = PACKAGE_DIR / 'games'
+GAME_FILENAME = PACKAGE_DIR / 'games.pickle.gz'
 
 MAPDICT = {
     '126fe960806d587c78546b30f1a90853b1ada468': 'a',  # Original
@@ -271,9 +271,9 @@ class FactionStat(object):
 
 
 def load():
+    """Try to load from pickled data."""
     allstats = []
-    # Try to load from pickle
-    if os.path.isfile(GAME_FILENAME):
+    if GAME_FILENAME.is_file():
         with gzip.open(GAME_FILENAME) as game_file:
             print("loading... ")
             allstats = pickle.load(game_file)
@@ -292,7 +292,7 @@ def parse_game_file(game_fn):
     if debug:
         print("game_id,faction,result_key,vp,margin,R1,R2,R3,R4,R5,R6")
     stats = []
-    if game_fn[-2:] == 'gz':
+    if game_fn.suffix == 'gz':
         openfunc = gzip.open
     else:
         openfunc = open
@@ -336,8 +336,10 @@ def parse_game_file(game_fn):
                 for s in factions:
                     print(game['game'] + ',' + s.name + ',' + get_key(s) + ',' + str(s.score) + ',' + str(s.margin) + ',' + str(s.score_tiles['1']) + ',' + str(s.score_tiles['2']) + ',' + str(s.score_tiles['3']) + ',' + str(s.score_tiles['4']) + ',' + str(s.score_tiles['5']) + ',' + str(s.score_tiles['6']))
             stats += factions
-    stats_fn = 'docs/stats' + game_fn[8:10] + game_fn[11:13] + '.json'
-    if not os.path.isfile(stats_fn):
+    fn = game_fn.stem
+    stats_fn = 'docs/stats' + fn[2:4] + fn[5:7] + '.json'
+    stats_fn = Path(stats_fn)
+    if not stats_fn.is_file():
         save_stats(compute_stats(stats, get_key), stats_fn)
     return stats
 
@@ -345,10 +347,10 @@ def parse_game_file(game_fn):
 def parse_games(game_list=None):
     allstats = []
     if not game_list:
-        game_list = map(lambda g: GAME_PATH + os.path.sep + g, os.listdir(GAME_PATH))
+        game_list = GAME_PATH.iterdir()
     for game in game_list:
         try:
-            if '.json' in game:
+            if game.suffix == '.json':
                 allstats.extend(parse_game_file(game))
             else:
                 print(game, "is not matched")
@@ -501,7 +503,7 @@ def compute_stats(allstats, key_func):
     )
 
 
-def save_stats(statpool, filename='docs/stats.json'):
+def save_stats(statpool, filename=None):
     def jsonify(x):
         """Handles welford stats"""
         if x.n == 1:
@@ -509,6 +511,8 @@ def save_stats(statpool, filename='docs/stats.json'):
         else:
             return x.n, x.M1, x.M2, x.M3, x.M4
 
+    if filename is None:
+        filename = Path('docs/stats.json')
     with open(filename, 'w+') as f:
         json.dump(statpool, f, default=jsonify, indent=2)
 
@@ -525,8 +529,8 @@ if __name__ == '__main__':
 
     allstats = load()
     if not allstats:
-        if not os.path.isdir(GAME_PATH):
-            print("You should download some games (see http://terra.snellman.net/data/events/ ) to " + GAME_PATH)
+        if not GAME_PATH.is_dir():
+            print("You should download some games (see http://terra.snellman.net/data/events/ ) to " + str(GAME_PATH))
             exit(1)
         allstats = parse_games()
         # save(allstats)
