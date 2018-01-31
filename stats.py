@@ -6,7 +6,7 @@ import csv
 import gzip
 import json
 import os.path
-import cPickle as pickle
+import pickle
 import sys
 from collections import defaultdict
 
@@ -123,7 +123,7 @@ class FactionStat(object):
         key = "favor:FAV" + str(num)
         if key not in events:
             return 9
-        r = events[key]["round"].keys()
+        r = list(events[key]["round"].keys())
         r.remove("all")
         return int(r[0])
 
@@ -134,7 +134,7 @@ class FactionStat(object):
         key = "town:TW" + str(num)
         if key not in events:
             return 0
-        r = events[key]["round"].keys()
+        r = list(events[key]["round"].keys())
         r.remove("all")
         return int(r[0])
 
@@ -163,7 +163,7 @@ class FactionStat(object):
             key = "order:" + str(num)
             if key not in events:
                 continue
-            r = events[key]["round"].keys()
+            r = list(events[key]["round"].keys())
             r.remove("all")
             for k in r:
                 result[str(k)] = num
@@ -247,7 +247,7 @@ class FactionStat(object):
                     self.options["fire-and-ice-factions/variable"] = 1
         self.multifaction = 1 if len(list(set(players))) != len(players) else 0
         # if self.multifaction == 1:
-        #    print players
+        #    print(players)
 
 
 def load():
@@ -255,44 +255,43 @@ def load():
     # Try to load from pickle
     if os.path.isfile(GAME_FILENAME):
         with gzip.open(GAME_FILENAME) as game_file:
-            print >> sys.stderr, "loading... ",
+            print("loading... ")
             sys.stdout.flush()
             allstats = pickle.load(game_file)
-            print >> sys.stderr, "done!"
+            print("done!")
     return allstats
 
 
 def save(allstats):
-    print >> sys.stderr, "saving... ",
+    print("saving... ", )
     sys.stdout.flush()
     with gzip.open(GAME_FILENAME, "w+") as game_file:
         pickle.dump(allstats, game_file)
-    print >> sys.stderr, "done!"
+    print("done!")
 
 
 def parse_game_file(game_fn):
     if debug:
-        print
-        "game_id,faction,result_key,vp,margin,R1,R2,R3,R4,R5,R6"
+        print("game_id,faction,result_key,vp,margin,R1,R2,R3,R4,R5,R6")
     stats = []
     if game_fn[-2:] == "gz":
         openfunc = gzip.open
     else:
         openfunc = open
     with openfunc(game_fn) as game_file:
-        print >> sys.stderr, "parsing " + game_fn + "..."
+        print("parsing " + game_fn + "...")
         games = json.load(game_file)
         for game in games:
             f = dict([(i["faction"], i["player"]) for i in game["factions"]])
             if "player1" in f or "player2" in f or "player3" in f or "player4" in f or "player5" in f or "player6" in f or "player7" in f:
-                print >> "Skpping game with incomplete players: " + game["game"]
+                print("Skpping game with incomplete players: " + game["game"])
                 continue
             game["factions2"] = f
             if game["game"] in BLACKLIST:
-                print >> sys.stderr, "Skipping irregular game: " + game["game"]
+                print("Skipping irregular game: " + game["game"])
                 continue
             if "drop-faction" in game["events"]["global"]:
-                print >> sys.stderr, "Skipping the game has dropped players: " + game["game"]
+                print("Skipping the game has dropped players: " + game["game"])
                 continue
             factions = []
             for faction in f.keys():
@@ -302,15 +301,15 @@ def parse_game_file(game_fn):
                     s = FactionStat(game, faction)
                     if s.bonus:  # Empty player count?
                         if s.multifaction > 0:
-                            print >> sys.stderr, "Player of this game plays multi factions: " + s.game_id
+                            print("Player of this game plays multi factions: " + s.game_id)
                             break
                         elif s.num_nofactions > 0:
-                            print >> sys.stderr, "Game with NoFaction: " + s.game_id
+                            print("Game with NoFaction: " + s.game_id)
                             break
                         else:
                             factions.append(s)
-                except KeyError, e:
-                    print >> sys.stderr, game_fn + " failed! (" + faction + " didn't have " + str(e.args) + ")"
+                except KeyError as e:
+                    print(game_fn + " failed! (" + faction + " didn't have " + str(e.args) + ")")
                     import pdb
                     pdb.set_trace()
             for faction1 in factions:
@@ -319,8 +318,7 @@ def parse_game_file(game_fn):
                         faction1.rank_in_game += 1
             if debug:
                 for s in factions:
-                    print
-                    game["game"] + "," + s.name + "," + get_key(s) + "," + str(s.score) + "," + str(s.margin) + "," + str(s.score_tiles["1"]) + "," + str(s.score_tiles["2"]) + "," + str(s.score_tiles["3"]) + "," + str(s.score_tiles["4"]) + "," + str(s.score_tiles["5"]) + "," + str(s.score_tiles["6"])
+                    print(game["game"] + "," + s.name + "," + get_key(s) + "," + str(s.score) + "," + str(s.margin) + "," + str(s.score_tiles["1"]) + "," + str(s.score_tiles["2"]) + "," + str(s.score_tiles["3"]) + "," + str(s.score_tiles["4"]) + "," + str(s.score_tiles["5"]) + "," + str(s.score_tiles["6"]))
             stats += factions
     stats_fn = "docs/stats" + game_fn[8:10] + game_fn[11:13] + ".json"
     if not os.path.isfile(stats_fn):
@@ -338,11 +336,11 @@ def parse_games(game_list=None):
             if '.json' in game:
                 allstats.extend(parse_game_file(game))
             else:
-                print >> sys.stderr, game + " is not matched"
-        except KeyboardInterrupt, e:
+                print(game + " is not matched")
+        except KeyboardInterrupt as e:
             break
-        # except TypeError, e:
-        #    print game, "is not game json"
+        # except TypeError as e:
+        #    print(game, "is not game json")
         #    continue
     return allstats
 
@@ -355,7 +353,7 @@ try:
     with open("ratings.json") as f:
         ratings = json.load(f)["players"]
 except:
-    print >> sys.stderr, "Warning! Download http://terra.snellman.net/data/ratings.json to get player ratings"
+    print("Warning! Download http://terra.snellman.net/data/ratings.json to get player ratings")
     ratings = {}
 
 
@@ -421,7 +419,7 @@ def get_key(faction):
     # option-temple-scoring-tile:
     # option-variable-turn-order:
 
-    # print faction.score_tiles
+    # print(faction.score_tiles)
     key = ""
     key += str(faction.map_type)  # 0
     key += "0" if "errata-cultist-power" not in faction.options else "1"  # 1
@@ -444,7 +442,7 @@ def get_key(faction):
     # key += str(faction.rank_in_game) #
     key += faction.period  # 22-24
     key += "".join(hex(i + 1)[2] for i in tuple(numpy.where(faction.favs <= 1)[0]))  # 25-
-    # print >> sys.stderr, faction.favs
+    # print(faction.favs)
     return key
 
 
@@ -470,7 +468,7 @@ def get_key2(faction):
     # option-temple-scoring-tile:
     # option-variable-turn-order:
 
-    # print faction.score_tiles
+    # print(faction.score_tiles)
     key = ""
     key += str(faction.map_type)  # 0
     key += "0" if "errata-cultist-power" not in faction.options else "1"  # 1
@@ -502,7 +500,7 @@ def get_statpool(allstats, statfuncs, key_func=get_key):
     statbase = [Welford() for x in statfuncs]
     for faction in allstats:
         if "1" not in faction.score_tiles:
-            print >> sys.stderr, "invalid score tiles: " + faction.game_id
+            print("invalid score tiles: " + faction.game_id)
             continue
         key = key_func(faction)
         stats = statpool.setdefault(key, copy.deepcopy(statbase))
@@ -559,13 +557,13 @@ if __name__ == "__main__":
     allstats = load()
     if not allstats:
         if not os.path.isdir(GAME_PATH):
-            print >> sys.stderr, "You should download some games (see http://terra.snellman.net/data/events/ ) to " + GAME_PATH
+            print("You should download some games (see http://terra.snellman.net/data/events/ ) to " + GAME_PATH)
             exit(1)
         allstats = parse_games()
         # save(allstats)
-    print >> sys.stderr, "Computing...",
+    print("Computing...")
     save_stats(compute_stats(allstats, get_key), "docs/stats.json")
 
     save_stats(compute_stats(allstats, get_key2), "docs/chooser.json")
-    print >> sys.stderr, "Finished"
+    print("Finished")
     # save_raw(statpool)
