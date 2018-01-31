@@ -349,13 +349,6 @@ def parse_games(game_list=None):
 # Here and below are parsing stats into web json
 #####
 
-try:
-    with open("ratings.json") as f:
-        ratings = json.load(f)["players"]
-except:
-    print("Warning! Download http://terra.snellman.net/data/ratings.json to get player ratings")
-    ratings = {}
-
 
 def get_rating(player, faction):
     if player not in ratings:
@@ -540,6 +533,14 @@ def save_raw(statpool, filename="stats.csv"):
 
 if __name__ == "__main__":
     debug = False  # sys.argv[0] == "-d" # False
+
+    try:
+        with open('ratings.json') as f:
+            ratings = json.load(f)['players']
+    except:
+        print("Warning! Download http://terra.snellman.net/data/ratings.json to get player ratings")
+        ratings = {}
+
     allstats = load()
     if not allstats:
         if not os.path.isdir(GAME_PATH):
