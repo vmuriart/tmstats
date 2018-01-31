@@ -85,6 +85,29 @@ BLACKLIST = [
     "verandi2",  # early PBF
 ]
 
+FDICT = {
+    u'acolytes': 'a',
+    u'alchemists': 'b',
+    u'auren': 'c',
+    u'chaosmagicians': 'd',
+    u'cultists': 'e',
+    u'darklings': 'f',
+    u'dragonlords': 'g',
+    u'dwarves': 'h',
+    u'engineers': 'i',
+    u'fakirs': 'j',
+    u'giants': 'k',
+    u'halflings': 'l',
+    u'icemaidens': 'm',
+    u'mermaids': 'n',
+    u'nomads': 'o',
+    u'riverwalkers': 'p',
+    u'shapeshifters': 'q',
+    u'swarmlings': 'r',
+    u'witches': 's',
+    u'yetis': 't'
+}
+
 
 class FactionStat(object):
     """faction status in game result"""
@@ -366,30 +389,6 @@ def get_rating(player, faction):
         return 4
 
 
-fdict = {
-    u'acolytes': 'a',
-    u'alchemists': 'b',
-    u'auren': 'c',
-    u'chaosmagicians': 'd',
-    u'cultists': 'e',
-    u'darklings': 'f',
-    u'dragonlords': 'g',
-    u'dwarves': 'h',
-    u'engineers': 'i',
-    u'fakirs': 'j',
-    u'giants': 'k',
-    u'halflings': 'l',
-    u'icemaidens': 'm',
-    u'mermaids': 'n',
-    u'nomads': 'o',
-    u'riverwalkers': 'p',
-    u'shapeshifters': 'q',
-    u'swarmlings': 'r',
-    u'witches': 's',
-    u'yetis': 't'
-}
-
-
 def get_key(faction):
     # all option at 2016-07-05
     # option-email-notify:
@@ -426,7 +425,7 @@ def get_key(faction):
     key += "0" if "temple-scoring-tile" not in faction.options else "1"  # 9
     key += str(faction.score_tiles["1"])  # 10
     key += str(faction.orders["1"])  # 11
-    key += str(fdict[faction.name])  # 12
+    key += str(FDICT[faction.name])  # 12
     key += str(faction.numplayers)  # 13
     key += str(get_rating(faction.user, faction.name))  # 14
     key += "".join(str(i) for i in tuple(faction.builts[:, 1]))  # 15-19
@@ -480,7 +479,7 @@ def get_key2(faction):
     key += str(faction.score_tiles["5"])  # 14
     key += str(faction.score_tiles["6"])  # 15
     key += str(faction.orders["1"])  # 16
-    key += str(fdict[faction.name])  # 17
+    key += str(FDICT[faction.name])  # 17
     key += str(faction.numplayers)  # 18
     key += str(get_rating(faction.user, faction.name))  # 19
     key += "".join("%d" % faction.all_bons[i] for i in range(1, 11))  # 20-29
