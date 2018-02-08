@@ -10,7 +10,7 @@ import pickle
 from collections import defaultdict
 from pathlib import Path
 
-import numpy
+import numpy as np
 
 from welford import Welford
 
@@ -137,9 +137,9 @@ class FactionStat(object):
 
     def parse_event(self, events, event_id):
         if event_id not in events:
-            return numpy.zeros(7)
+            return np.zeros(7)
         r = defaultdict(int, events[event_id]['round'])
-        return numpy.array((r['0'], r['1'], r['2'], r['3'], r['4'], r['5'], r['6']))
+        return np.array((r['0'], r['1'], r['2'], r['3'], r['4'], r['5'], r['6']))
 
     def parse_favor(self, events, num):
         key = 'favor:FAV' + str(num)
@@ -150,7 +150,7 @@ class FactionStat(object):
         return int(r[0])
 
     def parse_favors(self, events):
-        return numpy.array([self.parse_favor(events, i) for i in range(1, 13)])
+        return np.array([self.parse_favor(events, i) for i in range(1, 13)])
 
     def parse_town(self, events, num):
         key = 'town:TW' + str(num)
@@ -161,13 +161,13 @@ class FactionStat(object):
         return int(r[0])
 
     def parse_towns(self, events):
-        numpy.array([self.parse_town(events, i) for i in range(1, 9)])
+        np.array([self.parse_town(events, i) for i in range(1, 9)])
 
     def parse_bonus(self, events):
-        return tuple(numpy.where(numpy.array([self.parse_event(events, 'pass:BON' + str(i)) for i in range(1, 11)]).transpose() == 1)[1])
+        return tuple(np.where(np.array([self.parse_event(events, 'pass:BON' + str(i)) for i in range(1, 11)]).transpose() == 1)[1])
 
     def parse_picked_bonus(self, events):
-        data = numpy.zeros(11)
+        data = np.zeros(11)
         for i in range(1, 11):
             data[i] = max(self.parse_event(events, 'pass:BON' + str(i)))
         return data
@@ -175,9 +175,9 @@ class FactionStat(object):
     def parse_allbonus(self, events, num):
         key = 'pass:BON' + str(num)
         if key not in events:
-            return numpy.zeros(7)
+            return np.zeros(7)
         r = defaultdict(int, events[key]['round'])
-        return numpy.array((r['0'], r['1'], r['2'], r['3'], r['4'], r['5'], r['6']))
+        return np.array((r['0'], r['1'], r['2'], r['3'], r['4'], r['5'], r['6']))
 
     def parse_order(self, events):
         result = {}
@@ -205,14 +205,14 @@ class FactionStat(object):
         SH_evt = self.parse_event(events, 'upgrade:SH')
 
         # upgrade path...
-        D = numpy.cumsum(D_evt - TP_evt)
-        TP = numpy.cumsum(TP_evt - TE_evt - SH_evt)
-        TE = numpy.cumsum(TE_evt - SA_evt)
-        SA = numpy.cumsum(SA_evt)
-        SH = numpy.cumsum(SH_evt)
+        D = np.cumsum(D_evt - TP_evt)
+        TP = np.cumsum(TP_evt - TE_evt - SH_evt)
+        TE = np.cumsum(TE_evt - SA_evt)
+        SA = np.cumsum(SA_evt)
+        SH = np.cumsum(SH_evt)
 
         # each building, each round
-        self.builts = numpy.array((D, TP, TE, SA, SH), dtype=int)
+        self.builts = np.array((D, TP, TE, SA, SH), dtype=int)
 
         # each FAV, which round (if any)
         self.favs = self.parse_favors(events)
@@ -445,7 +445,7 @@ def get_key(faction):
     key += str(faction.leech_pw[1])  # 21
     # key += str(faction.rank_in_game) #
     key += faction.period  # 22-24
-    key += ''.join(hex(i + 1)[2] for i in tuple(numpy.where(faction.favs <= 1)[0]))  # 25-
+    key += ''.join(hex(i + 1)[2] for i in tuple(np.where(faction.favs <= 1)[0]))  # 25-
     # print(faction.favs)
     return key
 
