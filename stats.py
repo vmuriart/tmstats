@@ -142,7 +142,7 @@ class FactionStat(object):
         return np.array((r['0'], r['1'], r['2'], r['3'], r['4'], r['5'], r['6']))
 
     def parse_favor(self, events, num):
-        key = 'favor:FAV' + str(num)
+        key = f'favor:FAV{num}'
         if key not in events:
             return 9
         r = list(events[key]['round'].keys())
@@ -247,7 +247,7 @@ class FactionStat(object):
             if 'scoring-connected-distance' in k:
                 self.options['fire-and-ice-final-scoring'] = 1
 
-            # Stringhold and Sanctuary
+            # Stronghold and Sanctuary
             if 'scoring-connected-sa-sh-distance' in k:
                 self.options['fire-and-ice-final-scoring'] = 2
 
@@ -263,7 +263,7 @@ class FactionStat(object):
     def parse_players(self, factions):
         players = []
         for faction in factions:
-            if faction['player'] == None:
+            if faction['player'] is None:
                 players.append('anon-' + faction['faction'])
             else:
                 players.append(faction['player'])
@@ -536,6 +536,7 @@ def save_stats(statpool, filename=None):
 
     if filename is None:
         filename = Path('docs/stats.json')
+
     with open(filename, 'w+') as f:
         json.dump(statpool, f, default=jsonify, indent=2)
 
@@ -553,10 +554,11 @@ if __name__ == '__main__':
     allstats = load()
     if not allstats:
         if not GAME_PATH.is_dir():
-            print("You should download some games (see http://terra.snellman.net/data/events/ ) to " + str(GAME_PATH))
+            print(f"You should download some games (see http://terra.snellman.net/data/events/) to {str(GAME_PATH)}")
             exit(1)
         allstats = parse_games()
         # save(allstats)
+
     print("Computing...")
     save_stats(compute_stats(allstats, get_key), 'docs/stats.json')
 
